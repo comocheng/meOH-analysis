@@ -1,28 +1,20 @@
-#!/bin/bash
-#SBATCH --array=0-26
-#SBATCH --nodes=1
-#SBATCH --cpus-per-task=1
-#SBATCH --ntasks=1
-#SBATCH --time=00:30:00
-#SBATCH --mem=8Gb
-#SBATCH --job-name=Grabow_array
+#!/bin/sh
+
+#SBATCH -N 1
+#SBATCH -n 1
+#SBATCH --time=1:00:00
+#SBATCH --mem=20GB
+#SBATCH --exclude=c5003
+#SBATCH --job-name=PFR
+#SBATCH --output=grabow.%a.log
+#SBATCH --error=grabow.%a.slurm.log
 #SBATCH --partition=west
-#SBATCH --output=Grabow_array%a-slurm.log
-##SBATCH --exclude=c[5003]
+
+#an array for the job.
+#SBATCH --array=1-80
 
 
+####################################################
 source activate rmg_env
-export RMGpy=/scratch/nadeau.ma/RMG-Py
-
-mkdir -p rocketman-tol/$SLURM_ARRAY_TASK_ID
-rm -rf rocketman-tol/$SLURM_ARRAY_TASK_ID/*
-cp -f rocketman-graph.ipynb rocketman-tol/$SLURM_ARRAY_TASK_ID/
-cp -f ../RMG-model/cantera/chem_annotated.cti rocketman-tol/$SLURM_ARRAY_TASK_ID/
-cd rocketman-tol/$SLURM_ARRAY_TASK_ID
-jupyter nbconvert --ExecutePreprocessor.timeout=None \
-                  --ExecutePreprocessor.allow_errors=True \
-                  --to notebook \
-                  --execute \
-                  --inplace \
-                  rocketman-graph.ipynb
-#jupyter nbconvert --to markdown rocketman.ipynb
+export RMGpy=/home/blais.ch/RMG_Base_env/RMG-Py
+python -u PFR.py
