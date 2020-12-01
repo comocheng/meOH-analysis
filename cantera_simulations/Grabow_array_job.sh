@@ -11,10 +11,10 @@
 #SBATCH --partition=west
 
 #an array for the job.
-#SBATCH --array=1-80
+#SBATCH --array=1-36
 
 
 ####################################################
 source activate rmg_env
 export RMGpy=/home/blais.ch/RMG_Base_env/RMG-Py
-python -u PFR.py
+python -u Grabow_reactor.py

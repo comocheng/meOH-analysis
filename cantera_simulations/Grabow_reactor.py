@@ -19,7 +19,7 @@ import logging
 from collections import defaultdict
 
 # fet 
-c = int(os.getenv('SLURM_ARRAY_TASK_ID'))
+array_i = int(os.getenv('SLURM_ARRAY_TASK_ID'))
 
 # Grabow model and RMG input files
 cti_file_rmg = '../base/cantera/chem_annotated.cti'
@@ -34,20 +34,26 @@ Temps = [528]
 # Pressures = [15,30,50]
 Pressures = [75]
 volume_flows = [0.00424,0.0106,0.02544]
+volume_flows = [0.02544]
 
-# Mole fractions for run
-X_cos = [0.053, 0.1365, 0.220] 
-X_co2s = [0.261,0.1205, 0.261]
-X_h2s = [0.625, 0.7625, 0.900]
+# CO+CO2/H2
+H2_fraction = [0.8,0.5,0.95,0.75]
 
+#CO2/CO
+CO_CO2_ratio = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9] 
 settings  = list(itertools.product(Temps,
                                    Pressures,
                                    volume_flows,
-                                   X_cos,
-                                   X_co2s,
-                                   X_h2s
+                                   H2_fraction,
+                                   CO_CO2_ratio
                                   ))
 
+
+
+# Mole fractions for run (min max and mid from Graaf data)
+# X_cos = [0.053, 0.1365, 0.220] 
+# X_co2s = [0.261,0.1205, 0.261]
+# X_h2s = [0.625, 0.7625, 0.900]
 
 
 #######################################################################
@@ -63,21 +69,34 @@ pi = math.pi
 # set initial temps, pressures, concentrations
 temp = settings[array_i][0] # kelvin
 pressure = settings[array_i][1]*ct.one_atm # Pascals
-X_co = settings[array_i][3]
-X_co2= settings[array_i][4]
-X_h2 = settings[array_i][5]
 
-#normalize mole fractions
-X_co = X_co/(X_co+X_co2+X_h2)
-X_co2= X_co2/(X_co+X_co2+X_h2)
-X_h2 = X_h2/(X_co+X_co2+X_h2)
 
-mw_co = 28.01e-3  # [kg/mol]
-mw_co2 = 44.01e-3 # [kg/mol]
-mw_h2o = 18.01e-3 # [kg/mol]
+X_h2 = settings[array_i][3]
 
-# CO/CO2/H2/H2O: typical is 
-concentrations_rmg = {'CO(3)': X_co,'CO2(4)': X_co2, 'H2O(5)':X_h2o}
+if X_h2 == 0.75:
+    X_h2o = 0.05
+else:
+    X_h2o = 0
+    
+X_co = (1-(X_h2+X_h2o))*(settings[array_i][4])
+X_co2 = (1-(X_h2+X_h2o))*(1-settings[array_i][4])
+
+
+#normalize mole fractions just in case
+# X_co = X_co/(X_co+X_co2+X_h2)
+# X_co2= X_co2/(X_co+X_co2+X_h2)
+# X_h2 = X_h2/(X_co+X_co2+X_h2)
+
+mw_co = 28.01e-3       # [kg/mol]
+mw_co2 = 44.01e-3      # [kg/mol]
+mw_h2 = 2.016e-3       # [kg/mol]
+mw_h2o = 18.01528e-3   # [kg/mol]
+
+co2_ratio = X_co2/(X_co + X_co2)
+h2_ratio = (X_co2+X_co)/X_h2
+
+# CO/CO2/H2/H2: typical is 
+concentrations_rmg = {'CO(3)': X_co,'CO2(4)': X_co2, 'H2(2)':X_h2}
 
 # initialize cantera gas and surface
 gas= ct.Solution(cti_file_rmg,'gas')
@@ -110,38 +129,41 @@ cat_area = site_density/(cat_weight*cat_site_per_wt) #[m^3]
 r = ct.IdealGasReactor(gas, energy='on')
 rsurf = ct.ReactorSurface(surf, r, A=cat_area)
 r.volume = rvol
+surf.coverages = 'X(1):1.0'
 
 # flow controllers (Graaf measured flow at 293.15 and 1 atm)
 volume_flow = settings[array_i][2]                            # [m^3/s]
 molar_flow = volume_flow*pressure/(8.3145*temp)               # [mol/s]
-mass_flow = molar_flow*(X_co*mw_co+X_co2*mw_co2+X_h2o*mw_h2o) # [kg/s]
+mass_flow = molar_flow*(X_co*mw_co+X_co2*mw_co2+X_h2*mw_h2+X_h2o*mw_h2o)   # [kg/s]
 mfc = ct.MassFlowController(inlet, r, mdot=mass_flow)
 
 # initialize reactor network
 sim = ct.ReactorNet([r])
 # set relative and absolute tolerances on the simulation
-sim.rtol = 1.0e-9
-sim.atol = 1.0e-21
+sim.rtol = 1.0e-11
+sim.atol = 1.0e-22
 
 
 #################################################
 # Run single reactor 
 #################################################
 
-output_filename = f'Grabow_Results_RMG.csv'
-outfile = open(output_filename,'a')
+output_filename = f'Grabow_Results_RMG{array_i}.csv'
+outfile = open(output_filename,'w')
 writer = csv.writer(outfile)
-# writer.writerow(['T (C)', 'P (atm)', 'V (M^3/s)', 'X_co initial','X_co initial','X_co initial', 'T (C) final'] +
-#                 gas.species_names + surf.species_names,)
+writer.writerow(['T (C)', 'P (atm)', 'V (M^3/s)', 'X_co initial','X_co2 initial','X_h2 initial','X_h2o initial',
+                 'CO2/(CO2+CO)','(CO+CO2/H2)', 'T (C) final'] + gas.species_names + surf.species_names,)
 
 t = 0.0
-dt = 0.1
+dt = 0.01
 
 # run the simulation
 
-while t < 100000.0:
+while t < 1000000.0:
     t += dt
     sim.advance(t)
+   
 
-writer.writerow([temp, pressure, volume_flow, X_co, X_co2, X_h2o, gas.T] +
+
+writer.writerow([temp, pressure, volume_flow, X_co, X_co2, X_h2, X_h2o, co2_ratio, h2_ratio, gas.T] +
                  list(gas.X) + list(surf.X),)
