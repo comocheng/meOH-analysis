@@ -34,7 +34,7 @@ Temps = [528]
 # Pressures = [15,30,50]
 Pressures = [75]
 volume_flows = [0.00424,0.0106,0.02544]
-volume_flows = [0.00424]
+volume_flows = [0.02544]
 
 # CO+CO2/H2
 H2_fraction = [0.8,0.5,0.95,0.75]
@@ -140,8 +140,8 @@ mfc = ct.MassFlowController(inlet, r, mdot=mass_flow)
 # initialize reactor network
 sim = ct.ReactorNet([r])
 # set relative and absolute tolerances on the simulation
-sim.rtol = 1.0e-10
-sim.atol = 1.0e-21
+sim.rtol = 1.0e-11
+sim.atol = 1.0e-22
 
 
 #################################################
@@ -159,7 +159,7 @@ dt = 0.01
 
 # run the simulation
 
-while t < 10000.0:
+while t < 1000000.0:
     t += dt
     sim.advance(t)
    

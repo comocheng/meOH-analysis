@@ -22,7 +22,7 @@ from collections import defaultdict
 array_i = int(os.getenv('SLURM_ARRAY_TASK_ID'))
 
 # Grabow model and RMG input files
-cti_file_rmg = 'chem_annotated_removed.cti'
+cti_file_rmg = '../../base/cantera/chem_annotated.cti'
 
 # Reactor settings for run
 # Temps = [483.7-273.25, 499.3-273.25, 516.7-273.25]
@@ -33,7 +33,7 @@ cti_file_rmg = 'chem_annotated_removed.cti'
 Temps = [528]
 # Pressures = [15,30,50]
 Pressures = [75]
-volume_flows = [0.00424,0.0106,0.02544]
+# volume_flows = [0.00424,0.0106,0.02544]
 volume_flows = [0.00424]
 
 # CO+CO2/H2
@@ -61,7 +61,7 @@ settings  = list(itertools.product(Temps,
 #######################################################################
 
 # RMG input files
-cti_file_rmg = 'chem_annotated_removed.cti'
+cti_file_rmg = '../../base/cantera/chem_annotated.cti'
 
 #constants
 pi = math.pi
@@ -126,7 +126,7 @@ cat_site_per_wt = (300*1e-6)*1000                    #[mol/kg] 1e-6mol/micromole
 cat_area = site_density/(cat_weight*cat_site_per_wt) #[m^3]
 
 # reactor initialization
-r = ct.IdealGasReactor(gas, energy='on')
+r = ct.IdealGasReactor(gas, energy='off')
 rsurf = ct.ReactorSurface(surf, r, A=cat_area)
 r.volume = rvol
 surf.coverages = 'X(1):1.0'
@@ -140,15 +140,15 @@ mfc = ct.MassFlowController(inlet, r, mdot=mass_flow)
 # initialize reactor network
 sim = ct.ReactorNet([r])
 # set relative and absolute tolerances on the simulation
-sim.rtol = 1.0e-10
-sim.atol = 1.0e-21
+sim.rtol = 1.0e-11
+sim.atol = 1.0e-22
 
 
 #################################################
 # Run single reactor 
 #################################################
 
-output_filename = f'Grabow_Results_RMG{array_i}.csv'
+output_filename = f'Grabow_Results_RMG{array_i}_area{cat_area}.csv'
 outfile = open(output_filename,'w')
 writer = csv.writer(outfile)
 writer.writerow(['T (C)', 'P (atm)', 'V (M^3/s)', 'X_co initial','X_co2 initial','X_h2 initial','X_h2o initial',
@@ -159,7 +159,7 @@ dt = 0.01
 
 # run the simulation
 
-while t < 10000.0:
+while t < 1000000.0:
     t += dt
     sim.advance(t)
    

@@ -19,7 +19,7 @@ END
 THERMO
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-This is from the original Input file
+!This is from the original Input file
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! they don't give a low/high range. is it ok to just use the same values for both? 
 !Species    ∆H0 [kJ/mol] S0 [J/mol/K]     A          B           C          D        E           F         G       H
@@ -89,4 +89,5 @@ END
 
 
 REACTIONS
+
 END
