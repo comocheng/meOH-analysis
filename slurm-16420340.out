@@ -1,0 +1,80 @@
+[I 19:57:42.079 NotebookApp] [jupyter_nbextensions_configurator] enabled 0.4.1
+[I 19:57:42.080 NotebookApp] Serving notebooks from local directory: /work/westgroup/ChrisB/meOH-synthesis
+[I 19:57:42.080 NotebookApp] The Jupyter Notebook is running at:
+[I 19:57:42.080 NotebookApp] http://10.99.250.79:8888/?token=729b5436996c91853083848b0e57dde0b2855640fe2d94c0
+[I 19:57:42.080 NotebookApp]  or http://127.0.0.1:8888/?token=729b5436996c91853083848b0e57dde0b2855640fe2d94c0
+[I 19:57:42.080 NotebookApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
+[C 19:57:42.091 NotebookApp] 
+    
+    To access the notebook, open this file in a browser:
+        file:///home/blais.ch/.local/share/jupyter/runtime/nbserver-18133-open.html
+    Or copy and paste one of these URLs:
+        http://10.99.250.79:8888/?token=729b5436996c91853083848b0e57dde0b2855640fe2d94c0
+     or http://127.0.0.1:8888/?token=729b5436996c91853083848b0e57dde0b2855640fe2d94c0
+[I 20:31:28.902 NotebookApp] 302 GET / (10.15.184.7) 14.59ms
+[W 21:47:15.165 NotebookApp] delete /slurm-16420329.out
+[W 21:47:15.166 NotebookApp] Skipping trash for /work/westgroup/ChrisB/meOH-synthesis/slurm-16420329.out, on different device to home directory
+[W 21:47:15.175 NotebookApp] delete /slurm-16372455.out
+[W 21:47:15.175 NotebookApp] Skipping trash for /work/westgroup/ChrisB/meOH-synthesis/slurm-16372455.out, on different device to home directory
+[W 21:47:15.182 NotebookApp] delete /slurm-16420332.out
+[W 21:47:15.183 NotebookApp] Skipping trash for /work/westgroup/ChrisB/meOH-synthesis/slurm-16420332.out, on different device to home directory
+/home/blais.ch/.conda/envs/rmg_env/lib/python3.7/site-packages/jupyter_client/connect.py:164: RuntimeWarning: Failed to set sticky bit on '/home/blais.ch/.local/share/jupyter/runtime/kernel-7bf5c6ab-1c43-4e65-b601-ac23b2107760.json': [Errno 22] Invalid argument: '/home/blais.ch/.local/share/jupyter/runtime/kernel-7bf5c6ab-1c43-4e65-b601-ac23b2107760.json'
+Probably not a big deal, but runtime files may be cleaned up periodically.
+  RuntimeWarning,
+[I 21:47:35.005 NotebookApp] Kernel started: 7bf5c6ab-1c43-4e65-b601-ac23b2107760
+/home/blais.ch/.conda/envs/rmg_env/lib/python3.7/site-packages/jupyter_client/connect.py:164: RuntimeWarning: Failed to set sticky bit on '/home/blais.ch/.local/share/jupyter/runtime/kernel-7bf5c6ab-1c43-4e65-b601-ac23b2107760.json': [Errno 22] Invalid argument: '/home/blais.ch/.local/share/jupyter/runtime/kernel-7bf5c6ab-1c43-4e65-b601-ac23b2107760.json'
+Probably not a big deal, but runtime files may be cleaned up periodically.
+  RuntimeWarning,
+[I 21:49:35.225 NotebookApp] Saving file at /other/Text_import.ipynb
+[W 22:59:37.482 NotebookApp] WebSocket ping timeout after 119922 ms.
+[I 22:59:42.485 NotebookApp] Starting buffering for 7bf5c6ab-1c43-4e65-b601-ac23b2107760:9c8d98eeadfb4c348f7d61caf18645cf
+[I 07:24:42.886 NotebookApp] Restoring connection for 7bf5c6ab-1c43-4e65-b601-ac23b2107760:9c8d98eeadfb4c348f7d61caf18645cf
+/home/blais.ch/.conda/envs/rmg_env/lib/python3.7/site-packages/jupyter_client/connect.py:164: RuntimeWarning: Failed to set sticky bit on '/home/blais.ch/.local/share/jupyter/runtime/kernel-4868f49c-6b64-4c5d-a977-3cf2a4e3777f.json': [Errno 22] Invalid argument: '/home/blais.ch/.local/share/jupyter/runtime/kernel-4868f49c-6b64-4c5d-a977-3cf2a4e3777f.json'
+Probably not a big deal, but runtime files may be cleaned up periodically.
+  RuntimeWarning,
+[I 07:25:02.757 NotebookApp] Kernel started: 4868f49c-6b64-4c5d-a977-3cf2a4e3777f
+/home/blais.ch/.conda/envs/rmg_env/lib/python3.7/site-packages/jupyter_client/connect.py:164: RuntimeWarning: Failed to set sticky bit on '/home/blais.ch/.local/share/jupyter/runtime/kernel-4868f49c-6b64-4c5d-a977-3cf2a4e3777f.json': [Errno 22] Invalid argument: '/home/blais.ch/.local/share/jupyter/runtime/kernel-4868f49c-6b64-4c5d-a977-3cf2a4e3777f.json'
+Probably not a big deal, but runtime files may be cleaned up periodically.
+  RuntimeWarning,
+[W 07:25:12.928 NotebookApp] Notebook cantera_simulations/RMG_unmodified/Grabow_reactor_full.ipynb is not trusted
+/home/blais.ch/.conda/envs/rmg_env/lib/python3.7/site-packages/jupyter_client/connect.py:164: RuntimeWarning: Failed to set sticky bit on '/home/blais.ch/.local/share/jupyter/runtime/kernel-4f4e68b8-7b9e-4511-b0b6-7360a04afbf0.json': [Errno 22] Invalid argument: '/home/blais.ch/.local/share/jupyter/runtime/kernel-4f4e68b8-7b9e-4511-b0b6-7360a04afbf0.json'
+Probably not a big deal, but runtime files may be cleaned up periodically.
+  RuntimeWarning,
+[I 07:25:14.075 NotebookApp] Kernel started: 4f4e68b8-7b9e-4511-b0b6-7360a04afbf0
+/home/blais.ch/.conda/envs/rmg_env/lib/python3.7/site-packages/jupyter_client/connect.py:164: RuntimeWarning: Failed to set sticky bit on '/home/blais.ch/.local/share/jupyter/runtime/kernel-4f4e68b8-7b9e-4511-b0b6-7360a04afbf0.json': [Errno 22] Invalid argument: '/home/blais.ch/.local/share/jupyter/runtime/kernel-4f4e68b8-7b9e-4511-b0b6-7360a04afbf0.json'
+Probably not a big deal, but runtime files may be cleaned up periodically.
+  RuntimeWarning,
+[I 07:27:03.075 NotebookApp] Saving file at /cantera_simulations/RMG_unmodified/Analyze_grabow.ipynb
+[I 07:27:15.107 NotebookApp] Saving file at /cantera_simulations/RMG_unmodified/Grabow_reactor_full.ipynb
+[W 07:27:15.109 NotebookApp] Notebook cantera_simulations/RMG_unmodified/Grabow_reactor_full.ipynb is not trusted
+[I 07:31:36.692 NotebookApp] Saving file at /base/cantera/chem_annotated.cti
+[I 07:31:38.223 NotebookApp] Saving file at /base/cantera/chem_annotated.cti
+[I 07:31:38.475 NotebookApp] Saving file at /base/cantera/chem_annotated.cti
+[I 07:31:38.616 NotebookApp] Saving file at /base/cantera/chem_annotated.cti
+[I 07:31:38.790 NotebookApp] Saving file at /base/cantera/chem_annotated.cti
+[I 07:31:39.243 NotebookApp] Saving file at /base/cantera/chem_annotated.cti
+[I 07:31:39.281 NotebookApp] Saving file at /base/cantera/chem_annotated.cti
+[I 07:33:15.755 NotebookApp] Saving file at /cantera_simulations/RMG_unmodified/Grabow_reactor_full.ipynb
+[W 07:33:15.757 NotebookApp] Notebook cantera_simulations/RMG_unmodified/Grabow_reactor_full.ipynb is not trusted
+[I 07:35:10.452 NotebookApp] Saving file at /base/cantera/chem_annotated.cti
+[I 07:35:21.496 NotebookApp] Saving file at /base/cantera/chem_annotated.cti
+[I 07:37:15.226 NotebookApp] Saving file at /cantera_simulations/RMG_unmodified/Grabow_reactor_full.ipynb
+[W 07:37:15.228 NotebookApp] Notebook cantera_simulations/RMG_unmodified/Grabow_reactor_full.ipynb is not trusted
+[I 07:47:45.768 NotebookApp] Saving file at /base/cantera/chem_annotated.cti
+[I 07:47:46.380 NotebookApp] Saving file at /base/cantera/chem_annotated.cti
+[I 07:47:47.159 NotebookApp] Saving file at /base/cantera/chem_annotated.cti
+[I 07:49:06.079 NotebookApp] Saving file at /base/cantera/chem_annotated.cti
+[I 07:49:15.345 NotebookApp] Saving file at /cantera_simulations/RMG_unmodified/Grabow_reactor_full.ipynb
+[W 07:49:15.347 NotebookApp] Notebook cantera_simulations/RMG_unmodified/Grabow_reactor_full.ipynb is not trusted
+[I 07:49:38.269 NotebookApp] Saving file at /base/cantera/chem_annotated.cti
+[I 07:51:53.628 NotebookApp] Saving file at /base/cantera/chem_annotated.cti
+[I 07:52:20.717 NotebookApp] Saving file at /base/cantera/chem_annotated.cti
+[I 07:53:15.431 NotebookApp] Saving file at /cantera_simulations/RMG_unmodified/Grabow_reactor_full.ipynb
+[W 07:53:15.432 NotebookApp] Notebook cantera_simulations/RMG_unmodified/Grabow_reactor_full.ipynb is not trusted
+[I 07:53:27.282 NotebookApp] Saving file at /base/cantera/chem_annotated.cti
+[I 08:05:37.419 NotebookApp] Saving file at /base/cantera/chem_annotated.cti
+[I 08:07:15.992 NotebookApp] Saving file at /cantera_simulations/RMG_unmodified/Grabow_reactor_full.ipynb
+[W 08:07:15.994 NotebookApp] Notebook cantera_simulations/RMG_unmodified/Grabow_reactor_full.ipynb is not trusted
+[I 08:43:49.653 NotebookApp] Starting buffering for 4f4e68b8-7b9e-4511-b0b6-7360a04afbf0:59deb430a34247fabf0984587e3f270f
+[I 08:43:50.013 NotebookApp] Starting buffering for 4868f49c-6b64-4c5d-a977-3cf2a4e3777f:651acf6b517d4a50839a56c7f224aa5c
+[I 08:43:50.369 NotebookApp] Starting buffering for 7bf5c6ab-1c43-4e65-b601-ac23b2107760:9c8d98eeadfb4c348f7d61caf18645cf

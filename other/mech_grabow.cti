@@ -11,7 +11,7 @@ ideal_interface(name='surface1',
                 elements="H C O X",
                 species="""CH2OHX     CH2OX      CH3O2X     CH3OHX
                           CH3OX      CO2X       CO3X       COHX
-                          COOHX      COX        H2CO2X     
+                          COOHX      COX        H2CO2X     CH2OOCH3X
                           H2OX       HCO3X      HCOHX      HCOOCH3X
                           HCOOHX     HCOOX      HCOX       HX
                           OHX        OX         X""",
@@ -221,7 +221,7 @@ species(name='CH3OHX',
 species(name='HCOOCH3X',
         atoms='H:4,C:2,O:2,X:1',
         thermo=(Shomate([200.00, 1000.00],
-                     [2.38182839388145, 66.6020458891013, -44.1887643403442, 11.7392686424474, 0.0908102294455067, -2.9979565009554, 16.3097514340344])))
+                     [2.38182839388145, 66.6020458891013, -44.1887643403442, 11.7392686424474, 0.0908102294455067, -2.9979565009554, 16.3097514340344]))) 
                      
 #!CH2OOCH3X 0.49307,  332.64060,  -222.49264,  59.49041,  0.40746, -121887.09554,  40.49, -121875.38 
 species(name='CH2OOCH3X',
@@ -372,11 +372,15 @@ surface_reaction('CH3OX + HCOX <=> CH3OHX + COX', [6.668966e+20, 0.0, 8763.016])
 # surface1 Reaction 46
 surface_reaction('CH3OX + HCOOX <=> HCOOCH3X + OX', [2.391034e+20, 0.0, 28595.1])
 
-#cblais no thermo data for H2COOCH3? 
+#cblais no thermo data for H2COOCH3? I am assuming it is the same as CH2OOCH3 
+# CH2OX + CH3OX <=> CH2OOCH3X + X
+
+
 # surface1 Reaction 47
-#surface_reaction('CH3OX + CH2OX <=> H2COOCH3X + X', [2.208621e+22, 0.0, 2997.874])
+surface_reaction('CH3OX + CH2OX <=> CH2OOCH3X + X', [2.208621e+22, 0.0, 2997.874])
+
 # surface1 Reaction 48
-#surface_reaction('HCOOCH3X + HX <=> H2COOCH3X + X', [5.296552e+20, 0.0, 21676.93])
+surface_reaction('HCOOCH3X + HX <=> CH2OOCH3X + X', [5.296552e+20, 0.0, 21676.93])
 
 # surface1 Reaction 49
 surface_reaction('2 CH2OX <=> HCOOCH3X + X', [8.713793e+22, 0.0, 25597.23])
