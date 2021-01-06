@@ -1,0 +1,13 @@
+digraph reaction_paths {
+center=1;
+s2 -> s7[fontname="Helvetica", penwidth=5.86, arrowsize=2.93, color="0.7, 1.33, 0.9"
+, label=" 0.828"];
+s11 -> s14[fontname="Helvetica", penwidth=3.36, arrowsize=1.68, color="0.7, 0.53, 0.9"
+, label=" 0.0303"];
+s2 [ fontname="Helvetica", label="H2(2)"];
+s7 [ fontname="Helvetica", label="HCOOH(7)"];
+s11 [ fontname="Helvetica", label="HCO(31)"];
+s14 [ fontname="Helvetica", label="OCHCO(417)"];
+ label = "Scale = 1e-10\l Reaction path diagram following H in gas";
+ fontname = "Helvetica";
+}

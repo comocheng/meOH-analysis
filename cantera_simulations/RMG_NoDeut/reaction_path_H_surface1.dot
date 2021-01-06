@@ -1,0 +1,9 @@
+digraph reaction_paths {
+center=1;
+s16 -> s2[fontname="Helvetica", penwidth=6, arrowsize=3, color="0.7, 1.5, 0.9"
+, label=" 1"];
+s2 [ fontname="Helvetica", label="H2(2)"];
+s16 [ fontname="Helvetica", label="H*(10)"];
+ label = "Scale = 7.9e-10\l Reaction path diagram following H in surface1";
+ fontname = "Helvetica";
+}
