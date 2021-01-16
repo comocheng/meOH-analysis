@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "Grabow_reactor_nodeut.py", line 67, in <module>
-    temp = settings[array_i][0] # kelvin
-IndexError: list index out of range
