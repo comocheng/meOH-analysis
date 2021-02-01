@@ -129,8 +129,10 @@ r.volume = rvol
 surf.coverages = 'X(1):1.0'
 
 # flow controllers (Graaf measured flow at 293.15 and 1 atm)
+one_atm = ct.one_atm
+FC_temp = 293.15
 volume_flow = settings[array_i][2]                            # [m^3/s]
-molar_flow = volume_flow*pressure/(8.3145*temp)               # [mol/s]
+molar_flow = volume_flow*one_atm/(8.3145*293.15)               # [mol/s]
 mass_flow = molar_flow*(X_co*mw_co+X_co2*mw_co2+X_h2*mw_h2+X_h2o*mw_h2o)   # [kg/s]
 mfc = ct.MassFlowController(inlet, r, mdot=mass_flow)
 

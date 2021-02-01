@@ -1,9 +1,5 @@
 digraph reaction_paths {
 center=1;
-s9 -> s10[fontname="Helvetica", penwidth=6, arrowsize=3, color="0.7, 1.5, 0.9"
-, label=" 1"];
-s9 [ fontname="Helvetica", label="HCOOCH3(9)"];
-s10 [ fontname="Helvetica", label="CH4(41)"];
- label = "Scale = 2.7e-08\l Reaction path diagram following H in gas";
+ label = "Scale = 1e-10\l Reaction path diagram following H in gas";
  fontname = "Helvetica";
 }
