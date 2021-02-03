@@ -236,8 +236,13 @@ species(name='CH2OOCH3X',
 # surface1 Reaction 1
 surface_reaction('CO2 + X <=> CO2X', stick(1.000000e+00, 0.0, 0.0))
 
+######################################################################
 # surface1 Reaction 2
-surface_reaction('H2 + 2 X <=> 2 HX', stick(1.000000e+00, 0.0, 0.0))
+#surface_reaction('H2 + 2 X <=> 2 HX', stick(1.000000e+00, 0.0, 0.0))
+######################################################################
+
+# surface1 Reaction 2
+surface_reaction('H2 + 2 X <=> 2 HX', stick(1.000000e+00, 0.0, 9.665846080305926))
 
 # surface1 Reaction 3
 surface_reaction('CO + X <=> COX', stick(1.000000e+00, 0.0, 0.0))
