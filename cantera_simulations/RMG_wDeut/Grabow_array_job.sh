@@ -16,4 +16,4 @@
 
 ####################################################
 source activate rmg_env
-python -u Grabow_reactor_Wdeut.py
+python -u Grabow_reactor_script.py
