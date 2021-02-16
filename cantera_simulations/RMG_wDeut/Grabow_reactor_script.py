@@ -18,6 +18,7 @@ import re
 import itertools
 import logging
 from collections import defaultdict
+import git
 
 
 def save_flux_diagrams(*phases, suffix=''):
@@ -74,11 +75,17 @@ def run_reactor(cti_file, t_array=[528], p_array=[75], v_array=[0.00424], h2_arr
     import itertools
     import logging
     from collections import defaultdict
+    import git
     try:
         array_i = int(os.getenv('SLURM_ARRAY_TASK_ID'))
     except TypeError:
         array_i = 0
     
+    # get git commit hash and message
+    
+    repo = git.Repo('/work/westgroup/ChrisB/meoh-synthesis_RMG/meOH-synthesis/')
+    git_sha = str(repo.head.commit)[0:6]
+    git_msg = str(repo.head.commit.message)[0:20].replace(" ", "_").replace("'", "_")
 
     # this should probably be outside of function
     settings  = list(itertools.product(t_array,
@@ -97,7 +104,8 @@ def run_reactor(cti_file, t_array=[528], p_array=[75], v_array=[0.00424], h2_arr
 
 
     X_h2 = settings[array_i][3]
-
+    x_h2_str = str(X_h2)[0:2]
+    x_CO_CO2_str = str([array_i][4])[0:2]
     # Per Grabow experiments, add in H2O for X=0.75 H2 run
     if X_h2 == 0.75:
         X_h2o = 0.05
@@ -193,15 +201,17 @@ def run_reactor(cti_file, t_array=[528], p_array=[75], v_array=[0.00424], h2_arr
     # temp_str = '%s' % '%.3g' % tempn
 
     cat_area_str = '%s' % '%.3g' % cat_area
-    results_path = os.path.dirname(os.path.abspath(__file__)) + '/results'
-    flux_path = os.path.dirname(os.path.abspath(__file__)) + '/flux_diagrams'
+    results_path = os.path.dirname(os.path.abspath(__file__)) + 
+                                  f'/{git_sha}_{git_msg}/{reactor_type_str}/results'
+    flux_path = os.path.dirname(os.path.abspath(__file__)) + 
+                               f'/{git_sha}_{git_msg}/{reactor_type_str}/flux_diagrams/{x_h2_str}/{x_CO_CO2_str}'
     try:  
         os.mkdir(results_path)  
         os.mkdir(flux_path)
     except OSError as error:  
         print(error) 
     
-    output_filename = results_path + f'/Spinning_basket_area_{cat_area_str}_{reactor_type_str}_energy_{energy}.csv'
+    output_filename = results_path + f'/Spinning_basket_area_{cat_area_str}_energy_{energy}_temp_{temp}.csv'
     outfile = open(output_filename,'w')
     writer = csv.writer(outfile)
     writer.writerow(['T (C)', 'P (atm)', 'V (M^3/s)', 'X_co initial','X_co2 initial','X_h2 initial','X_h2o initial',
@@ -212,7 +222,7 @@ def run_reactor(cti_file, t_array=[528], p_array=[75], v_array=[0.00424], h2_arr
 
     # run the simulation
 
-    while t < 1000.0:
+    while t < 10000.0:
     # while t < 1000000.0:
         t += dt
         sim.advance(t)
@@ -231,16 +241,22 @@ def run_reactor(cti_file, t_array=[528], p_array=[75], v_array=[0.00424], h2_arr
 # Input Parameters for combustor
 #######################################################################
 
+# git checkout
+# repo.git.checkout('master')
+sha = repo.head.commit
+msg = repo.head.commit.message
+print(sha,': ', msg)
 
 # filepath for writing files
-cti_file = os.path.dirname(os.path.abspath(__file__)) +'/chem_annotated.cti'
+# cti_file = os.path.dirname(os.path.abspath(__file__)) +'/chem_annotated.cti'
+cti_file = '/work/westgroup/ChrisB/meoh-synthesis_RMG/meOH-synthesis/base/cantera/chem_annotated.cti'
 print(cti_file)
 # Reactor settings arrays for run
 Temps = [483.7-273.25, 499.3-273.25, 516.7-273.25]
 Pressures = [15,30,50,75]
 volume_flows = [0.00424,0.0106,0.02544]
 
-# Mole fractions for run (min max and mid from Graaf data)
+# Mole fractions from runs for reference (min max and mid from Graaf data)
 # X_cos = [0.053, 0.1365, 0.220] 
 # X_co2s = [0.261,0.1205, 0.261]
 # X_h2s = [0.625, 0.7625, 0.900]
@@ -251,4 +267,5 @@ H2_fraction = [0.8,0.5,0.95,0.75]
 #CO2/CO
 CO_CO2_ratio = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9] 
 
-run_reactor(cti_file=cti_file)
+run_reactor(cti_file=cti_file, reactor_type=3, h2_array=H2_fraction, co2_array=CO_CO2_ratio)
+
