@@ -1,2 +1,9 @@
 # git dstore files
 *.DS_Store
+*.dot
+*.dot.png
+*.csv
+*.log
+*beginning.png
+*end.png
+

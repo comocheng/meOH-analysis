@@ -21,6 +21,150 @@ from collections import defaultdict
 import git
 
 
+# todo: 
+# add in save_pictures so we save it in the proper folder
+
+def save_pictures(self, overwrite=False):
+    """
+    Save a folder full of molecule pictures, needed for the pretty dot files.
+
+    Saves them in the results directory, in a subfolder "species_pictures".
+    Unless you set overwrite=True, it'll leave alone files that are
+    already there.
+    """
+    dictionary_filename = self.dictionary_filename
+    specs = Database().get_species(dictionary_filename, resonance=False)
+
+    images_dir = os.path.join(self.results_directory, "species_pictures")
+    os.makedirs(images_dir, exist_ok=True)
+    for name, species in specs.items():
+        filepath = os.path.join(images_dir, name + ".png")
+        if not overwrite and os.path.exists(filepath):
+            continue
+        print(name)
+        species.molecule[0].draw(filepath)
+
+def save_flux_diagrams_2(self, path="", suffix="", fmt="pdf"):
+    """
+    Saves the flux diagrams, in the provided path.
+    The filenames have a suffix if provided,
+    so you can keep them separate and not over-write.
+    fmt can be 'pdf' on 'png'
+    """
+    for element in "CHONX":
+        for phase_object in (self.gas, self.surf):
+            phase = phase_object.name
+
+            diagram = ct.ReactionPathDiagram(phase_object, element)
+            diagram.title = f"Reaction path diagram following {element} in {phase}"
+            diagram.label_threshold = 0.01
+
+            dot_file = os.path.join(
+                path,
+                f"reaction_path_{element}_{phase}{'_' if suffix else ''}{suffix}.dot",
+            )
+            img_file = os.path.join(
+                path,
+                f"reaction_path_{element}_{phase}{'_' if suffix else ''}{suffix}.{fmt}",
+            )
+            diagram.write_dot(dot_file)
+            # print(diagram.get_data())
+
+            print(
+                f"Wrote graphviz input file to '{os.path.join(os.getcwd(), dot_file)}'."
+            )
+
+            # Unufortunately this code is duplicated below,
+            # so be sure to duplicate any changes you make!
+            pretty_dot_file = prettydot(dot_file)
+            subprocess.run(
+                [
+                    "dot",
+                    os.path.abspath(pretty_dot_file),
+                    f"-T{fmt}",
+                    "-o",
+                    os.path.abspath(img_file),
+                    "-Gdpi=72",
+                ],
+                cwd=self.results_directory,
+                check=True,
+            )
+            print(
+                f"Wrote graphviz output file to '{os.path.join(os.getcwd(), img_file)}'."
+            )
+
+    # Now do the combined flux
+    for name, fluxes_dict in [
+        ("mass", self.get_current_fluxes()),
+        ("integrated mass", self.total_fluxes),
+    ]:
+
+        flux_data_string = self.combine_fluxes(fluxes_dict)
+        dot_file = os.path.join(
+            path,
+            f"reaction_path_{name.replace(' ','_')}{'_' if suffix else ''}{suffix}.dot",
+        )
+        img_file = os.path.join(
+            path,
+            f"reaction_path_{name.replace(' ','_')}{'_' if suffix else ''}{suffix}.{fmt}",
+        )
+        write_flux_dot(
+            flux_data_string,
+            dot_file,
+            threshold=0.01,
+            title=f"Reaction path diagram showing combined {name}",
+        )
+        # Unufortunately this code is duplicated above,
+        # so be sure to duplicate any changes you make!
+        pretty_dot_file = prettydot(dot_file)
+
+        subprocess.run(
+            [
+                "dot",
+                os.path.abspath(pretty_dot_file),
+                f"-T{fmt}",
+                "-o",
+                os.path.abspath(img_file),
+                "-Gdpi=72",
+            ],
+            cwd=self.results_directory,
+            check=True,
+        )
+        print(
+            f"Wrote graphviz output file to '{os.path.abspath(os.path.join(self.results_directory, img_file))}'."
+        )
+
+def show_flux_diagrams(self, suffix="", embed=False):
+    """
+    Shows the flux diagrams in the notebook.
+    Loads them from disk.
+    Does not embed them, to keep the .ipynb file small,
+    unless embed=True. Use embed=True if you might over-write the files,
+    eg. you want to show flux at different points.
+    """
+    import IPython
+
+    for element in "CHONX":
+        for phase_object in (self.gas, self.surf):
+            phase = phase_object.name
+            img_file = f"reaction_path_{element}_{phase}{'_' if suffix else ''}{suffix}.png"
+            display(IPython.display.HTML(f"<hr><h2>{element} {phase}</h2>"))
+            if embed:
+                display(
+                    IPython.display.Image(filename=img_file, width=400, embed=True)
+                )
+            else:
+                display(IPython.display.Image(url=img_file, width=400, embed=False))
+
+        # Now do the combined
+        img_file = f"reaction_path_mass{'_' if suffix else ''}{suffix}.png"
+        display(IPython.display.HTML(f"<hr><h2>Combined mass</h2>"))
+        if embed:
+            display(IPython.display.Image(filename=img_file, width=400, embed=True))
+        else:
+            display(IPython.display.Image(url=img_file, width=400, embed=False))
+
+
 def save_flux_diagrams(*phases, suffix='', timepoint=''):
     import pandas as pd
     import numpy as np
