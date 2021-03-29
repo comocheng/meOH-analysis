@@ -44,96 +44,6 @@ def save_pictures(self, overwrite=False):
         print(name)
         species.molecule[0].draw(filepath)
 
-def save_flux_diagrams_2(self, path="", suffix="", fmt="pdf"):
-    """
-    Saves the flux diagrams, in the provided path.
-    The filenames have a suffix if provided,
-    so you can keep them separate and not over-write.
-    fmt can be 'pdf' on 'png'
-    """
-    for element in "CHONX":
-        for phase_object in (self.gas, self.surf):
-            phase = phase_object.name
-
-            diagram = ct.ReactionPathDiagram(phase_object, element)
-            diagram.title = f"Reaction path diagram following {element} in {phase}"
-            diagram.label_threshold = 0.01
-
-            dot_file = os.path.join(
-                path,
-                f"reaction_path_{element}_{phase}{'_' if suffix else ''}{suffix}.dot",
-            )
-            img_file = os.path.join(
-                path,
-                f"reaction_path_{element}_{phase}{'_' if suffix else ''}{suffix}.{fmt}",
-            )
-            diagram.write_dot(dot_file)
-            # print(diagram.get_data())
-
-            print(
-                f"Wrote graphviz input file to '{os.path.join(os.getcwd(), dot_file)}'."
-            )
-
-            # Unufortunately this code is duplicated below,
-            # so be sure to duplicate any changes you make!
-            pretty_dot_file = prettydot(dot_file)
-            subprocess.run(
-                [
-                    "dot",
-                    os.path.abspath(pretty_dot_file),
-                    f"-T{fmt}",
-                    "-o",
-                    os.path.abspath(img_file),
-                    "-Gdpi=72",
-                ],
-                cwd=self.results_directory,
-                check=True,
-            )
-            print(
-                f"Wrote graphviz output file to '{os.path.join(os.getcwd(), img_file)}'."
-            )
-
-    # Now do the combined flux
-    for name, fluxes_dict in [
-        ("mass", self.get_current_fluxes()),
-        ("integrated mass", self.total_fluxes),
-    ]:
-
-        flux_data_string = self.combine_fluxes(fluxes_dict)
-        dot_file = os.path.join(
-            path,
-            f"reaction_path_{name.replace(' ','_')}{'_' if suffix else ''}{suffix}.dot",
-        )
-        img_file = os.path.join(
-            path,
-            f"reaction_path_{name.replace(' ','_')}{'_' if suffix else ''}{suffix}.{fmt}",
-        )
-        write_flux_dot(
-            flux_data_string,
-            dot_file,
-            threshold=0.01,
-            title=f"Reaction path diagram showing combined {name}",
-        )
-        # Unufortunately this code is duplicated above,
-        # so be sure to duplicate any changes you make!
-        pretty_dot_file = prettydot(dot_file)
-
-        subprocess.run(
-            [
-                "dot",
-                os.path.abspath(pretty_dot_file),
-                f"-T{fmt}",
-                "-o",
-                os.path.abspath(img_file),
-                "-Gdpi=72",
-            ],
-            cwd=self.results_directory,
-            check=True,
-        )
-        print(
-            f"Wrote graphviz output file to '{os.path.abspath(os.path.join(self.results_directory, img_file))}'."
-        )
-
 def show_flux_diagrams(self, suffix="", embed=False):
     """
     Shows the flux diagrams in the notebook.
@@ -204,7 +114,7 @@ def save_flux_diagrams(*phases, suffix='', timepoint=''):
 
 
 def run_reactor(cti_file, t_array=[528], p_array=[75], v_array=[0.00424], h2_array=[0.75], co2_array=[0.5], 
-                rtol=1.0e-11, atol=1.0e-22, reactor_type=0, energy='off'):
+                rtol=1.0e-11, atol=1.0e-22, reactor_type=0, energy='off', sensitivity=False):
     
     import pandas as pd
     import numpy as np
@@ -336,13 +246,11 @@ def run_reactor(cti_file, t_array=[528], p_array=[75], v_array=[0.00424], h2_arr
     sim.rtol = 1.0e-11
     sim.atol = 1.0e-22
 
-
     #################################################
     # Run single reactor 
     #################################################
 
     # round numbers so they're easier to read
-    # 
     # temp_str = '%s' % '%.3g' % tempn
 
     cat_area_str = '%s' % '%.3g' % cat_area
@@ -368,12 +276,37 @@ def run_reactor(cti_file, t_array=[528], p_array=[75], v_array=[0.00424], h2_arr
     gasrxn_ROP_str = [i + ' ROP [kmol/m^3 s]' for i in gas.reaction_equations()] 
     surfrxn_ROP_str =  [i + ' ROP [kmol/m^2 s]' for i in surf.reaction_equations()] 
     
-    
     output_filename = results_path + f'/Spinning_basket_area_{cat_area_str}_energy_{energy}_temp_{temp}_h2_{x_h2_str}_COCO2_{x_CO_CO2_str}.csv'
     outfile = open(output_filename,'w')
     writer = csv.writer(outfile)
-    writer.writerow(['T (C)', 'P (atm)', 'V (M^3/s)', 'X_co initial','X_co2 initial','X_h2 initial','X_h2o initial',
-                    'CO2/(CO2+CO)','(CO+CO2/H2)', 'T (C) final', 'Rtol', 'Atol'] + gas.species_names + surf.species_names + gas_ROP_str + gas_surf_ROP_str + surf_ROP_str + gasrxn_ROP_str + surfrxn_ROP_str)
+    
+    # Sensitivity atol, rtol, and strings for gas and surface reactions if selected
+    # slows down script by a lot
+    if sensitivity: 
+        sim.rtol_sensitivity = 1e-6
+        sim.atol_sensitivity = 1e-6
+        sens_species = ["CH3OH(8)"]
+        
+        # turn on sensitive reactions 
+        for i in range(gas.n_reactions):
+            r.add_sensitivity_reaction(i)
+
+        for i in range(surf.n_reactions):
+            rsurf.add_sensitivity_reaction(i)
+
+        for j in sens_species:
+            gasrxn_sens_str = [j + " sensitivity to " + i for i in gas.reaction_equations()] 
+            surfrxn_sens_str =  [j + " sensitivity to " + i for i in surf.reaction_equations()]
+            sens_list = gasrxn_sens_str + surfrxn_sens_str
+
+        writer.writerow(['T (C)', 'P (atm)', 'V (M^3/s)', 'X_co initial','X_co2initial','X_h2 initial','X_h2o initial',
+                        'CO2/(CO2+CO)','(CO+CO2/H2)', 'T (C) final', 'Rtol', 'Atol'] + gas.species_names + surf.species_names +\
+                        gas_ROP_str + gas_surf_ROP_str + surf_ROP_str + gasrxn_ROP_str + surfrxn_ROP_str + sens_list)
+
+    else:
+        writer.writerow(['T (C)', 'P (atm)', 'V (M^3/s)', 'X_co initial','X_co2 initial','X_h2 initial','X_h2o initial',
+                    'CO2/(CO2+CO)','(CO+CO2/H2)', 'T (C) final', 'Rtol', 'Atol'] + gas.species_names + surf.species_names +\
+                    gas_ROP_str + gas_surf_ROP_str + surf_ROP_str + gasrxn_ROP_str + surfrxn_ROP_str)
 
     t = 0.0
     dt = 0.1
@@ -390,8 +323,22 @@ def run_reactor(cti_file, t_array=[528], p_array=[75], v_array=[0.00424], h2_arr
         t += dt
         sim.advance(t)
         if t%10 < 0.01:
-            writer.writerow([temp, pressure, volume_flow, X_co, X_co2, X_h2, X_h2o, co2_ratio, h2_ratio, gas.T, sim.rtol, sim.atol] +
-                list(gas.X) + list(surf.X) + list(gas.net_production_rates) + list(surf.net_production_rates) + list(gas.net_rates_of_progress) + list(surf.net_rates_of_progress))
+
+            if sensitivity:
+                # get sensitivity for sensitive species i (e.g. methanol) in reaction j
+                for i in sens_species:  
+                    gas_sensitivities = [sim.sensitivity(i,j) for j in range(gas.n_reactions)]
+                    surf_sensitivities = [sim.sensitivity(i,j) for j in range(surf.n_reactions)]
+                    sensitivities_all = gas_sensitivities + surf_sensitivities
+
+                writer.writerow([temp, pressure, volume_flow, X_co, X_co2, X_h2, X_h2o, co2_ratio, h2_ratio, gas.T, sim.rtol, sim.atol] +
+                    list(gas.X) + list(surf.X) + list(gas.net_production_rates) + list(surf.net_production_rates) + list(gas.net_rates_of_progress) +\
+                        list(surf.net_rates_of_progress) + sensitivities_all)
+
+            else: 
+                writer.writerow([temp, pressure, volume_flow, X_co, X_co2, X_h2, X_h2o, co2_ratio, h2_ratio, gas.T, sim.rtol, sim.atol] +
+                    list(gas.X) + list(surf.X) + list(gas.net_production_rates) + list(surf.net_production_rates) + list(gas.net_rates_of_progress) +\
+                        list(surf.net_rates_of_progress))
     
     outfile.close()
 
@@ -399,6 +346,8 @@ def run_reactor(cti_file, t_array=[528], p_array=[75], v_array=[0.00424], h2_arr
     save_flux_diagrams(gas, suffix=flux_path, timepoint='end')
     save_flux_diagrams(surf, suffix=flux_path, timepoint='end')
     return 
+
+ 
 
 
 #######################################################################
@@ -424,6 +373,7 @@ H2_fraction = [0.8,0.5,0.95,0.75]
 
 #CO2/CO
 CO_CO2_ratio = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9] 
+sensitivity = True
 
-run_reactor(cti_file=cti_file, t_array=Temps, reactor_type=3, h2_array=H2_fraction, co2_array=CO_CO2_ratio)
+run_reactor(cti_file=cti_file, t_array=Temps, reactor_type=3, h2_array=H2_fraction, co2_array=CO_CO2_ratio, sensitivity=sensitivity)
 
