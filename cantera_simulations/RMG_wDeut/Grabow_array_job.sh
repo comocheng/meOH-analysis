@@ -15,5 +15,5 @@
 
 
 ####################################################
-source activate rmg_env
+source activate cantera
 python -u Grabow_reactor_script.py

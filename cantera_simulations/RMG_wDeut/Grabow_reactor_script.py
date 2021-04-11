@@ -283,8 +283,8 @@ def run_reactor(cti_file, t_array=[528], p_array=[75], v_array=[0.00424], h2_arr
     # Sensitivity atol, rtol, and strings for gas and surface reactions if selected
     # slows down script by a lot
     if sensitivity: 
-        sim.rtol_sensitivity = 1e-6
-        sim.atol_sensitivity = 1e-6
+        sim.rtol_sensitivity = 1e-8
+        sim.atol_sensitivity = 1e-8
         sens_species = ["CH3OH(8)"]
         
         # turn on sensitive reactions/species
@@ -296,11 +296,15 @@ def run_reactor(cti_file, t_array=[528], p_array=[75], v_array=[0.00424], h2_arr
           
         for i in range(gas.n_species):
             r.add_sensitivity_species_enthalpy(i)
+            
+        for i in range(surf.n_species):
+            rsurf.add_sensitivity_species_enthalpy(i)
            
         for j in sens_species:
             gasrxn_sens_str = [j + " sensitivity to " + i for i in gas.reaction_equations()] 
             surfrxn_sens_str =  [j + " sensitivity to " + i for i in surf.reaction_equations()]
-            gastherm_sens_str = [j + " thermo sensitivity to " + i for i in gas.species_names] 
+            gastherm_sens_str = [j + " thermo sensitivity to " + i for i in gas.species_names]
+            surftherm_sens_str = [j + " thermo sensitivity to " + i for i in surf.species_names] 
             sens_list = gasrxn_sens_str + surfrxn_sens_str + gastherm_sens_str
 
         writer.writerow(['T (C)', 'P (atm)', 'V (M^3/s)', 'X_co initial','X_co2initial','X_h2 initial','X_h2o initial',
@@ -334,10 +338,12 @@ def run_reactor(cti_file, t_array=[528], p_array=[75], v_array=[0.00424], h2_arr
                     g_nrxn = gas.n_reactions
                     s_nrxn = surf.n_reactions
                     g_nspec = gas.n_species
+                    s_nspec = surf.n_species
                     
                     gas_sensitivities = [sim.sensitivity(i,j) for j in range(gas.n_reactions)]
                     surf_sensitivities = [sim.sensitivity(i,j) for j in range(g_nrxn,g_nrxn+s_nrxn)]
                     gas_therm_sensitivities = [sim.sensitivity(i,j) for j in range(g_nrxn+s_nrxn,g_nrxn+s_nrxn+g_nspec)]
+                    surf_therm_sensitivities = [sim.sensitivity(i,j) for j in range(g_nrxn+s_nrxn+g_nspec,g_nrxn+s_nrxn+g_nspec+s_nspec)]
                     sensitivities_all = gas_sensitivities + surf_sensitivities + gas_therm_sensitivities
 
                 writer.writerow([temp, pressure, volume_flow, X_co, X_co2, X_h2, X_h2o, co2_ratio, h2_ratio, gas.T, sim.rtol, sim.atol] +
@@ -378,6 +384,7 @@ volume_flows = [0.00424,0.0106,0.02544]
 # X_h2s = [0.625, 0.7625, 0.900]
 
 # CO+CO2/H2
+# H2_fraction = [0.8,0.5,0.95,0.75]
 H2_fraction = [0.8,0.5,0.95,0.75]
 
 #CO2/CO
