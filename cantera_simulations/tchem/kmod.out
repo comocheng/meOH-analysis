@@ -1,0 +1,63 @@
+Number of elements in the mechanism : 18
+-------------------------------------------
+  No.    Name       Mass 
+    1       H     1.008e+00
+    2       D     2.014e+00
+    3       T     3.016e+00
+    4       C     1.201e+01
+    5      CI     1.300e+01
+    6       O     1.600e+01
+    7      OI     1.800e+01
+    8       N     1.401e+01
+    9      NE     2.018e+01
+   10      AR     3.995e+01
+   11      HE     4.003e+00
+   12      SI     2.809e+01
+   13       S     3.206e+01
+   14       F     1.900e+01
+   15      CL     3.545e+01
+   16      BR     7.990e+01
+   17       I     1.269e+02
+   18       X     1.951e+02
+
+Number of species in the mechanism : 10
+-------------------------------------------------------------------------------------------------------------------
+  No.           Name            Mass        Element content
+                                            H   D   T   C  CI   O  OI   N  NE  AR  HE  SI   S   F  CL  BR   I   X 
+-------------------------------------------------------------------------------------------------------------------
+    1                  N2     2.801e+01     0   0   0   0   0   0   0   2   0   0   0   0   0   0   0   0   0   0 
+    2                  NE     2.018e+01     0   0   0   0   0   0   0   0   1   0   0   0   0   0   0   0   0   0 
+    3               H2(2)     2.016e+00     2   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0 
+    4               CO(3)     2.801e+01     0   0   0   1   0   1   0   0   0   0   0   0   0   0   0   0   0   0 
+    5              CO2(4)     4.401e+01     0   0   0   1   0   2   0   0   0   0   0   0   0   0   0   0   0   0 
+    6              H2O(5)     1.802e+01     2   0   0   0   0   1   0   0   0   0   0   0   0   0   0   0   0   0 
+    7             CH2O(6)     3.003e+01     2   0   0   1   0   1   0   0   0   0   0   0   0   0   0   0   0   0 
+    8            HCOOH(7)     4.603e+01     2   0   0   1   0   2   0   0   0   0   0   0   0   0   0   0   0   0 
+    9            CH3OH(8)     3.204e+01     4   0   0   1   0   1   0   0   0   0   0   0   0   0   0   0   0   0 
+   10          HCOOCH3(9)     6.005e+01     4   0   0   2   0   2   0   0   0   0   0   0   0   0   0   0   0   0 
+
+Number of reactions in the mechanism : 6
+---------------------------------------------------------------------
+Pre-exponential factor and activation energy units : moles & kcal/mole
+---------------------------------------------------------------------
+   1-> H2(2) + CO(3) <=> CH2O(6)
+    --> Arrhenius coefficients (forward) :  2.8900e+09   1.16   8.2100e+01
+
+   2-> H2O(5) + CO(3) <=> HCOOH(7)
+    --> Arrhenius coefficients (forward) :  2.5400e-01   3.70   5.3360e+01
+
+   3-> H2(2) + CO2(4) <=> HCOOH(7)
+    --> This reaction is a duplicate -1
+    --> Arrhenius coefficients (forward) :  1.5100e+09   1.23   7.3900e+01
+
+   4-> CO(3) + CH3OH(8) <=> HCOOCH3(9)
+    --> Arrhenius coefficients (forward) :  1.2700e-01   3.70   5.3360e+01
+
+   5-> H2(2) + CO2(4) <=> HCOOH(7)
+    --> This reaction is a duplicate 2
+    --> Arrhenius coefficients (forward) :  1.5100e+09   1.23   7.3900e+01
+
+   6-> H2(2) + CO2(4) <=> HCOOH(7)
+    --> This reaction is a duplicate 2
+    --> Arrhenius coefficients (forward) :  1.5100e+09   1.23   7.3900e+01
+

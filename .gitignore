@@ -7,4 +7,4 @@
 *beginning.png
 *end.png
 *.json
-
+*.ipynb_checkpoints*
