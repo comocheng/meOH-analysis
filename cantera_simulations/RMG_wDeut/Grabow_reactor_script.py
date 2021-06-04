@@ -19,13 +19,12 @@ import itertools
 import logging
 from collections import defaultdict
 import git
+import time
 
+from rmgpy.molecule import Molecule
+from rmgpy.data.base import Database
 
-# todo:
-# add in save_pictures so we save it in the proper folder
-
-
-def save_pictures(self, overwrite=False):
+def save_pictures(git_path="", species_path="", overwrite=False):
     """
     Save a folder full of molecule pictures, needed for the pretty dot files.
 
@@ -33,18 +32,83 @@ def save_pictures(self, overwrite=False):
     Unless you set overwrite=True, it'll leave alone files that are
     already there.
     """
-    dictionary_filename = self.dictionary_filename
+    dictionary_filename = git_path + "/base/chemkin/species_dictionary.txt"
     specs = Database().get_species(dictionary_filename, resonance=False)
 
-    images_dir = os.path.join(self.results_directory, "species_pictures")
+    images_dir = os.path.join(species_path)
     os.makedirs(images_dir, exist_ok=True)
     for name, species in specs.items():
         filepath = os.path.join(images_dir, name + ".png")
         if not overwrite and os.path.exists(filepath):
             continue
-        print(name)
         species.molecule[0].draw(filepath)
 
+def prettydot(species_path="", dotfilepath="", strip_line_labels=False):
+    """
+    Make a prettier version of the dot file (flux diagram)
+
+    Assumes the species pictures are stored in a directory
+    called 'species_pictures' alongside the dot file.
+    """
+    pictures_directory = f'{species_path}/'
+
+    if strip_line_labels:
+        print("stripping edge (line) labels")
+
+    reSize = re.compile('size="5,6"\;page="5,6"')
+    reNode = re.compile(
+        '(?P<node>s\d+)\ \[\ fontname="Helvetica",\ label="(?P<label>[^"]*)"\]\;'
+    )
+
+    rePicture = re.compile("(?P<smiles>.+?)\((?P<id>\d+)\)\.png")
+    reLabel = re.compile("(?P<name>.+?)\((?P<id>\d+)\)$")
+
+    species_pictures = dict()
+    for picturefile in os.listdir(pictures_directory):
+        match = rePicture.match(picturefile)
+        if match:
+            species_pictures[match.group("id")] = picturefile
+        else:
+            pass
+            # print(picturefile, "didn't look like a picture")
+
+    filepath = dotfilepath
+
+    if not open(filepath).readline().startswith("digraph"):
+        raise ValueError("{0} - not a digraph".format(filepath))
+
+    infile = open(filepath)
+    prettypath = filepath.replace(".dot", "", 1) + "-pretty.dot"
+    outfile = open(prettypath, "w")
+
+    for line in infile:
+        (line, changed_size) = reSize.subn('size="12,12";page="12,12"', line)
+        match = reNode.search(line)
+        if match:
+            label = match.group("label")
+            idmatch = reLabel.match(label)
+            if idmatch:
+                idnumber = idmatch.group("id")
+                if idnumber in species_pictures:
+                    line = (
+                        f'%s [ image="{pictures_directory}%s" label="" width="0.5" height="0.5" imagescale=false fixedsize=false color="none" ];\n'
+                        % (match.group("node"), species_pictures[idnumber])
+                    )
+
+        # rankdir="LR" to make graph go left>right instead of top>bottom
+        if strip_line_labels:
+            line = re.sub('label\s*=\s*"\s*[\d.]+"', 'label=""', line)
+
+        # change colours
+        line = re.sub('color="0.7,\ (.*?),\ 0.9"', r'color="1.0, \1, 0.7*\1"', line)
+
+        outfile.write(line)
+
+    outfile.close()
+    infile.close()
+    print(f"Graph saved to: {prettypath}")
+    os.system(f'dot {prettypath} -Tpng -o{prettypath.replace(".dot", "", 1) + ".png"} -Gdpi=200')
+    return prettypath
 
 def show_flux_diagrams(self, suffix="", embed=False):
     """
@@ -77,21 +141,7 @@ def show_flux_diagrams(self, suffix="", embed=False):
             display(IPython.display.Image(url=img_file, width=400, embed=False))
 
 
-def save_flux_diagrams(*phases, suffix="", timepoint=""):
-    import pandas as pd
-    import numpy as np
-    import time
-    import cantera as ct
-    from matplotlib import pyplot as plt
-    import csv
-    import math
-    import os
-    import sys
-    import re
-    import itertools
-    import logging
-    from collections import defaultdict
-
+def save_flux_diagrams(*phases, suffix="", timepoint="", species_path=""):
     """
     Saves the flux diagrams. The filenames have a suffix if provided,
     so you can keep them separate and not over-write.
@@ -111,6 +161,10 @@ def save_flux_diagrams(*phases, suffix="", timepoint=""):
             )
             img_path = os.path.join(os.getcwd(), img_file)
             diagram.write_dot(dot_file)
+
+            #also make a prettydot file
+            prettydot(species_path, dot_file, strip_line_labels=False)
+
             # print(diagram.get_data())
 
             print(
@@ -137,20 +191,6 @@ def run_reactor(
     reactime=1e5,
 ):
 
-    import pandas as pd
-    import numpy as np
-    import time
-    import cantera as ct
-    from matplotlib import pyplot as plt
-    import csv
-    import math
-    import os
-    import sys
-    import re
-    import itertools
-    import logging
-    from collections import defaultdict
-    import git
 
     try:
         array_i = int(os.getenv("SLURM_ARRAY_TASK_ID"))
@@ -158,10 +198,19 @@ def run_reactor(
         array_i = 0
 
     # get git commit hash and message
-
-    repo = git.Repo("/work/westgroup/ChrisB/meoh-synthesis_RMG/meOH-synthesis/")
+    rmg_model_path = "/work/westgroup/ChrisB/meoh-synthesis_RMG/meOH-synthesis"
+    repo = git.Repo(rmg_model_path)
+    date = time.localtime(repo.head.commit.committed_date)
+    git_date = f"{date[0]}_{date[1]}_{date[2]}_{date[3]}{date[4]}"
     git_sha = str(repo.head.commit)[0:6]
-    git_msg = str(repo.head.commit.message)[0:20].replace(" ", "_").replace("'", "_")
+    git_msg = str(repo.head.commit.message)[0:50].replace(" ", "_").replace("'", "_").replace("\n", "")
+    git_file_string = f"{git_date}_{git_sha}_{git_msg}"
+
+    # set sensitivity string for file path name
+    if sensitivity:
+        sensitivity_str = "on"
+    else: 
+        sensitivity_str = "off"
 
     # this should probably be outside of function
     settings = list(itertools.product(t_array, p_array, v_array, h2_array, co2_array))
@@ -201,17 +250,25 @@ def run_reactor(
     h2_ratio = (X_co2 + X_co) / X_h2
 
     # CO/CO2/H2/H2: typical is
-    concentrations_rmg = {"CO(3)": X_co, "CO2(4)": X_co2, "H2(2)": X_h2}
+    concentrations_rmg = {"CO(3)": X_co, "CO2(4)": X_co2, "H2(2)": X_h2, "H2O(5)": X_h2o,}
 
     # initialize cantera gas and surface
     gas = ct.Solution(cti_file, "gas")
-
-    # surf_grab = ct.Interface(cti_file,'surface1_grab', [gas_grab])
     surf = ct.Interface(cti_file, "surface1", [gas])
 
-    # gas_grab.TPX =
+    # initialize T and P
     gas.TPX = temp, pressure, concentrations_rmg
     surf.TP = temp, pressure
+
+    # if a mistake is made with the input, 
+    # cantera will normalize the mole fractions. 
+    # make sure that we are reporting/using 
+    # the normalized values
+    X_co = float(gas["CO(3)"].X)
+    X_co2 = float(gas["CO2(4)"].X)
+    X_h2 = float(gas["H2(2)"].X)
+    X_h2o = float(gas["H2O(5)"].X)
+
 
     # create gas inlet
     inlet = ct.Reservoir(gas)
@@ -219,10 +276,10 @@ def run_reactor(
     # create gas outlet
     exhaust = ct.Reservoir(gas)
 
-    # Reactor volume
+    # Reactor volume (divide by 2 per Graaf paper)
     rradius = 35e-3
     rlength = 70e-3
-    rvol = (rradius ** 2) * pi * rlength
+    rvol = (rradius ** 2) * pi * rlength/2
 
     # Catalyst Surface Area
     site_density = (
@@ -246,6 +303,7 @@ def run_reactor(
         r = ct.IdealGasConstPressureReactor(gas, energy=energy)
         reactor_type_str = "IdealGasConstPressureReactor"
 
+    # calculate the available catalyst area in a differential reactor
     rsurf = ct.ReactorSurface(surf, r, A=cat_area)
     r.volume = rvol
     surf.coverages = "X(1):1.0"
@@ -279,20 +337,32 @@ def run_reactor(
 
     # round numbers so they're easier to read
     # temp_str = '%s' % '%.3g' % tempn
-
     cat_area_str = "%s" % "%.3g" % cat_area
+    species_path = (
+        os.path.dirname(os.path.abspath(__file__))
+        + f"/{git_file_string}/species_pictures"
+    )
+    print(species_path)
     results_path = (
         os.path.dirname(os.path.abspath(__file__))
-        + f"/{git_sha}_{git_msg}/{reactor_type_str}/transient/{temp_str}/results"
+       + f"/{git_file_string}/{reactor_type_str}/energy_{energy}/sensitivity_{sensitivity_str}/{temp_str}/results"
     )
     results_path_csp = (
         os.path.dirname(os.path.abspath(__file__))
-        + f"/{git_sha}_{git_msg}/{reactor_type_str}/transient/{temp_str}/results/csp"
+        + f"/{git_file_string}/{reactor_type_str}/energy_{energy}/sensitivity_{sensitivity_str}/{temp_str}/csp"
     )
+
     flux_path = (
         os.path.dirname(os.path.abspath(__file__))
-        + f"/{git_sha}_{git_msg}/{reactor_type_str}/transient/{temp_str}/flux_diagrams/{x_h2_str}/{x_CO_CO2_str}"
+        + f"/{git_file_string}/{reactor_type_str}/energy_{energy}/sensitivity_{sensitivity_str}/{temp_str}/flux_diagrams/{x_h2_str}/{x_CO_CO2_str}"
     )
+    # create species folder for species pictures if it does not already exist
+    try:
+        os.makedirs(species_path, exist_ok=True)
+        save_pictures(git_path=rmg_model_path, species_path=species_path)
+    except OSError as error:
+        print(error)
+
     try:
         os.makedirs(results_path, exist_ok=True)
     except OSError as error:
@@ -300,8 +370,10 @@ def run_reactor(
 
     try:
         os.makedirs(results_path_csp, exist_ok=True)
+        print(results_path_csp)
     except OSError as error:
         print(error)
+        print("no results for CSP saved")
 
     try:
         os.makedirs(flux_path, exist_ok=True)
@@ -325,7 +397,7 @@ def run_reactor(
     )
     output_filename_csp = (
         results_path_csp
-        + f"/Spinning_basket_area_{cat_area_str}_energy_{energy}"
+        + f"/CSP_Spinning_basket_area_{cat_area_str}_energy_{energy}"
         + f"_temp_{temp}_h2_{x_h2_str}_COCO2_{x_CO_CO2_str}.csv"
     )
     outfile = open(output_filename, "w")
@@ -379,6 +451,7 @@ def run_reactor(
                 "Rtol",
                 "Atol",
                 "reactor type",
+                "energy on?"
             ]
             + gas.species_names
             + surf.species_names
@@ -406,6 +479,7 @@ def run_reactor(
                 "Rtol",
                 "Atol",
                 "reactor type",
+                "energy on?"
             ]
             + gas.species_names
             + surf.species_names
@@ -431,8 +505,9 @@ def run_reactor(
     while t < reactime:
         # save flux diagrams at beginning of run
         if first_run == True:
-            save_flux_diagrams(gas, suffix=flux_path, timepoint="beginning")
-            save_flux_diagrams(surf, suffix=flux_path, timepoint="beginning")
+            save_flux_diagrams(gas, suffix=flux_path, timepoint="beginning", species_path=species_path)
+            save_flux_diagrams(surf, suffix=flux_path, timepoint="beginning", species_path=species_path)
+
             first_run = False
         t += dt
         sim.advance(t)
@@ -476,6 +551,7 @@ def run_reactor(
                     sim.rtol,
                     sim.atol,
                     reactor_type_str,
+                    energy,
                 ]
                 + list(gas.X)
                 + list(surf.X)
@@ -502,6 +578,7 @@ def run_reactor(
                     sim.rtol,
                     sim.atol,
                     reactor_type_str,
+                    energy,
                 ]
                 + list(gas.X)
                 + list(surf.X)
@@ -528,272 +605,6 @@ def run_reactor(
 
     outfile.close()
     outfile_csp.close()
-
-    # save flux diagrams at the end of the run
-    save_flux_diagrams(gas, suffix=flux_path, timepoint="end")
-    save_flux_diagrams(surf, suffix=flux_path, timepoint="end")
-    return
-
-
-def run_reactor_ss(
-    cti_file,
-    t_array=[528],
-    p_array=[75],
-    v_array=[0.00424],
-    h2_array=[0.75],
-    co2_array=[0.5],
-    rtol=1.0e-11,
-    atol=1.0e-22,
-    reactor_type=0,
-    energy="off",
-    sensitivity=False,
-    sensatol=1e-6,
-    sensrtol=1e-6,
-    reactime=1e5,
-):
-    ''' 
-    run the reactor to steady state. saves a single CSV output file with one row of data. 
-    results saved in new folder marked "steady state" under reactor type
-    
-    '''
-
-    import pandas as pd
-    import numpy as np
-    import time
-    import cantera as ct
-    from matplotlib import pyplot as plt
-    import csv
-    import math
-    import os
-    import sys
-    import re
-    import itertools
-    import logging
-    from collections import defaultdict
-    import git
-
-    try:
-        array_i = int(os.getenv("SLURM_ARRAY_TASK_ID"))
-    except TypeError:
-        array_i = 0
-
-    # get git commit hash and message
-
-    repo = git.Repo("/work/westgroup/ChrisB/meoh-synthesis_RMG/meOH-synthesis/")
-    git_sha = str(repo.head.commit)[0:6]
-    git_msg = str(repo.head.commit.message)[0:20].replace(" ", "_").replace("'", "_")
-
-    # this should probably be outside of function
-    settings = list(itertools.product(t_array, p_array, v_array, h2_array, co2_array))
-
-    # constants
-    pi = math.pi
-
-    # set initial temps, pressures, concentrations
-    temp = settings[array_i][0]  # kelvin
-    temp_str = str(temp)[0:3]
-    pressure = settings[array_i][1] * ct.one_atm  # Pascals
-
-    X_h2 = settings[array_i][3]
-    x_h2_str = str(X_h2)[0:3].replace(".", "_")
-    x_CO_CO2_str = str(settings[array_i][4])[0:3].replace(".", "_")
-
-    # Per Grabow experiments, add in H2O for X=0.75 H2 run
-    if X_h2 == 0.75:
-        X_h2o = 0.05
-    else:
-        X_h2o = 0
-
-    X_co = (1 - (X_h2 + X_h2o)) * (settings[array_i][4])
-    X_co2 = (1 - (X_h2 + X_h2o)) * (1 - settings[array_i][4])
-
-    # normalize mole fractions just in case
-    # X_co = X_co/(X_co+X_co2+X_h2)
-    # X_co2= X_co2/(X_co+X_co2+X_h2)
-    # X_h2 = X_h2/(X_co+X_co2+X_h2)
-
-    mw_co = 28.01e-3  # [kg/mol]
-    mw_co2 = 44.01e-3  # [kg/mol]
-    mw_h2 = 2.016e-3  # [kg/mol]
-    mw_h2o = 18.01528e-3  # [kg/mol]
-
-    co2_ratio = X_co2 / (X_co + X_co2)
-    h2_ratio = (X_co2 + X_co) / X_h2
-
-    # CO/CO2/H2/H2: typical is
-    concentrations_rmg = {"CO(3)": X_co, "CO2(4)": X_co2, "H2(2)": X_h2}
-
-    # initialize cantera gas and surface
-    gas = ct.Solution(cti_file, "gas")
-
-    # surf_grab = ct.Interface(cti_file,'surface1_grab', [gas_grab])
-    surf = ct.Interface(cti_file, "surface1", [gas])
-
-    # gas_grab.TPX =
-    gas.TPX = temp, pressure, concentrations_rmg
-    surf.TP = temp, pressure
-
-    # create gas inlet
-    inlet = ct.Reservoir(gas)
-
-    # create gas outlet
-    exhaust = ct.Reservoir(gas)
-
-    # Reactor volume
-    rradius = 35e-3
-    rlength = 70e-3
-    rvol = (rradius ** 2) * pi * rlength
-
-    # Catalyst Surface Area
-    site_density = (
-        surf.site_density * 1000
-    )  # [mol/m^2]cantera uses kmol/m^2, convert to mol/m^2
-    cat_weight = 4.24e-3  # [kg]
-    cat_site_per_wt = (300 * 1e-6) * 1000  # [mol/kg] 1e-6mol/micromole, 1000g/kg
-    cat_area = site_density / (cat_weight * cat_site_per_wt)  # [m^3]
-
-    # reactor initialization
-    if reactor_type == 0:
-        r = ct.Reactor(gas, energy=energy)
-        reactor_type_str = "Reactor"
-    elif reactor_type == 1:
-        r = ct.IdealGasReactor(gas, energy=energy)
-        reactor_type_str = "IdealGasReactor"
-    elif reactor_type == 2:
-        r = ct.ConstPressureReactor(gas, energy=energy)
-        reactor_type_str = "ConstPressureReactor"
-    elif reactor_type == 3:
-        r = ct.IdealGasConstPressureReactor(gas, energy=energy)
-        reactor_type_str = "IdealGasConstPressureReactor"
-
-    rsurf = ct.ReactorSurface(surf, r, A=cat_area)
-    r.volume = rvol
-    surf.coverages = "X(1):1.0"
-
-    # flow controllers (Graaf measured flow at 293.15 and 1 atm)
-    one_atm = ct.one_atm
-    FC_temp = 293.15
-    volume_flow = settings[array_i][2]  # [m^3/s]
-    molar_flow = volume_flow * one_atm / (8.3145 * FC_temp)  # [mol/s]
-    mass_flow = molar_flow * (
-        X_co * mw_co + X_co2 * mw_co2 + X_h2 * mw_h2 + X_h2o * mw_h2o
-    )  # [kg/s]
-    mfc = ct.MassFlowController(inlet, r, mdot=mass_flow)
-
-    # A PressureController has a baseline mass flow rate matching the 'master'
-    # MassFlowController, with an additional pressure-dependent term. By explicitly
-    # including the upstream mass flow rate, the pressure is kept constant without
-    # needing to use a large value for 'K', which can introduce undesired stiffness.
-    outlet_mfc = ct.PressureController(r, exhaust, master=mfc, K=0.01)
-
-    # initialize reactor network
-    sim = ct.ReactorNet([r])
-
-    # set relative and absolute tolerances on the simulation
-    sim.rtol = 1.0e-11
-    sim.atol = 1.0e-22
-
-    #################################################
-    # Run single reactor
-    #################################################
-
-    # round numbers so they're easier to read
-    # temp_str = '%s' % '%.3g' % tempn
-
-    cat_area_str = "%s" % "%.3g" % cat_area
-    results_path = (
-        os.path.dirname(os.path.abspath(__file__))
-        + f"/{git_sha}_{git_msg}/{reactor_type_str}/steady_state/{temp_str}/results"
-    )
-
-    flux_path = (
-        os.path.dirname(os.path.abspath(__file__))
-        + f"/{git_sha}_{git_msg}/{reactor_type_str}/steady_state/{temp_str}/flux_diagrams/{x_h2_str}/{x_CO_CO2_str}"
-    )
-    try:
-        os.makedirs(results_path, exist_ok=True)
-    except OSError as error:
-        print(error)
-
-    try:
-        os.makedirs(flux_path, exist_ok=True)
-    except OSError as error:
-        print(error)
-
-    gas_ROP_str = [i + " ROP [kmol/m^3 s]" for i in gas.species_names]
-
-    # surface ROP reports gas and surface ROP. these values are not redundant.
-    gas_surf_ROP_str = [i + " surface ROP [kmol/m^2 s]" for i in gas.species_names]
-    surf_ROP_str = [i + " ROP [kmol/m^2 s]" for i in surf.species_names]
-
-    gasrxn_ROP_str = [i + " ROP [kmol/m^3 s]" for i in gas.reaction_equations()]
-    surfrxn_ROP_str = [i + " ROP [kmol/m^2 s]" for i in surf.reaction_equations()]
-
-    output_filename = (
-        results_path
-        + f"/Spinning_basket_area_{cat_area_str}_energy_{energy}"
-        + f"_temp_{temp}_h2_{x_h2_str}_COCO2_{x_CO_CO2_str}.csv"
-    )
-    
-    outfile = open(output_filename, "w")
-    writer = csv.writer(outfile)
-    
-    writer.writerow(
-        [
-            "T (C)",
-            "P (atm)",
-            "V (M^3/s)",
-            "X_co initial",
-            "X_co2 initial",
-            "X_h2 initial",
-            "X_h2o initial",
-            "CO2/(CO2+CO)",
-            "(CO+CO2/H2)",
-            "T (C) final",
-            "Rtol",
-            "Atol",
-            "reactor type",
-        ]
-        + gas.species_names
-        + surf.species_names
-        + gas_ROP_str
-        + gas_surf_ROP_str
-        + surf_ROP_str
-        + gasrxn_ROP_str
-        + surfrxn_ROP_str
-    )
-        
-    # Run Simulation to steady state
-    sim.advance_to_steady_state()
-    
-    # Record steady state data to CSV
-    writer.writerow(
-        [
-            temp,
-            pressure,
-            volume_flow,
-            X_co,
-            X_co2,
-            X_h2,
-            X_h2o,
-            co2_ratio,
-            h2_ratio,
-            gas.T,
-            sim.rtol,
-            sim.atol,
-            reactor_type_str,
-        ]
-        + list(gas.X)
-        + list(surf.X)
-        + list(gas.net_production_rates)
-        + list(surf.net_production_rates)
-        + list(gas.net_rates_of_progress)
-        + list(surf.net_rates_of_progress)
-    )
-
-  
-
-    outfile.close()
 
     # save flux diagrams at the end of the run
     save_flux_diagrams(gas, suffix=flux_path, timepoint="end")
@@ -839,21 +650,12 @@ run_reactor(
     reactor_type=1,
     h2_array=H2_fraction,
     co2_array=CO_CO2_ratio,
+    energy="off",
     sensitivity=sensitivity,
     sensatol=sensatol,
     sensrtol=sensrtol,
     reactime=reactime,
 )
 
-# could put a try catch here, but 
-# this way it will run the regular sim
-# before attempting the steady state solver
-run_reactor_ss(
-    cti_file=cti_file,
-    t_array=Temps,
-    reactor_type=1,
-    h2_array=H2_fraction,
-    co2_array=CO_CO2_ratio,
-)
 
 
