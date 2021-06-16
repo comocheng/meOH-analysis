@@ -287,7 +287,7 @@ def run_reactor(
     )  # [mol/m^2]cantera uses kmol/m^2, convert to mol/m^2
     cat_weight = 4.24e-3  # [kg]
     cat_site_per_wt = (300 * 1e-6) * 1000  # [mol/kg] 1e-6mol/micromole, 1000g/kg
-    cat_area = site_density / (cat_weight * cat_site_per_wt)  # [m^3]
+    cat_area = (cat_weight * cat_site_per_wt)/site_density  # [m^2]
 
     # reactor initialization
     if reactor_type == 0:
@@ -379,7 +379,7 @@ def run_reactor(
         os.makedirs(flux_path, exist_ok=True)
     except OSError as error:
         print(error)
-
+    
     gas_ROP_str = [i + " ROP [kmol/m^3 s]" for i in gas.species_names]
 
     # surface ROP reports gas and surface ROP. these values might be redundant, not sure.
@@ -398,13 +398,15 @@ def run_reactor(
     output_filename_csp = (
         results_path_csp
         + f"/CSP_Spinning_basket_area_{cat_area_str}_energy_{energy}"
-        + f"_temp_{temp}_h2_{x_h2_str}_COCO2_{x_CO_CO2_str}.csv"
+        + f"_temp_{temp}_h2_{x_h2_str}_COCO2_{x_CO_CO2_str}.dat"
     )
     outfile = open(output_filename, "w")
     outfile_csp = open(output_filename_csp, "w")
     writer = csv.writer(outfile)
-    writer_csp = csv.writer(outfile_csp)
-
+    writer_csp = csv.writer(outfile_csp, delimiter='\t')
+              
+    logging.warning(results_path+output_filename)
+              
     # Sensitivity atol, rtol, and strings for gas and surface reactions if selected
     # slows down script by a lot
     if sensitivity:
@@ -489,12 +491,13 @@ def run_reactor(
             + gasrxn_ROP_str
             + surfrxn_ROP_str
         )
-
-    writer_csp.writerow(
-        ["iter", "t", "dt", "Density[kg/m3]", "Pressure[Pascal]", "Temperature[K]",]
-        + gas.species_names
-        + surf.species_names
-    )
+    # only run csp writer up to 100 seconds. todo: make built in criteria for steady state (ss achieved flag?)        
+    if sim.time < 100: 
+        writer_csp.writerow(
+            ["iter", "t", "dt", "Density[kg/m3]", "Pressure[Pascal]", "Temperature[K]",]
+            + gas.species_names
+            + surf.species_names
+        )
 
     t = 0.0
     dt = 0.1
@@ -605,7 +608,8 @@ def run_reactor(
 
     outfile.close()
     outfile_csp.close()
-
+    
+    
     # save flux diagrams at the end of the run
     save_flux_diagrams(gas, suffix=flux_path, timepoint="end")
     save_flux_diagrams(surf, suffix=flux_path, timepoint="end")

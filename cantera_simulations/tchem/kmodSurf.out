@@ -1,0 +1,513 @@
+Number of elements in the mechanism : 18
+-------------------------------------------
+  No.    Name       Mass 
+    1       H     1.008e+00
+    2       D     2.014e+00
+    3       T     3.016e+00
+    4       C     1.201e+01
+    5      CI     1.300e+01
+    6       O     1.600e+01
+    7      OI     1.800e+01
+    8       N     1.401e+01
+    9      NE     2.018e+01
+   10      AR     3.995e+01
+   11      HE     4.003e+00
+   12      SI     2.809e+01
+   13       S     3.206e+01
+   14       F     1.900e+01
+   15      CL     3.545e+01
+   16      BR     7.990e+01
+   17       I     1.269e+02
+   18       X     1.951e+02
+
+Number of species in the mechanism : 11
+-------------------------------------------------------------------------------------------------------------------
+  No.           Name            Mass        Element content
+                                            H   D   T   C  CI   O  OI   N  NE  AR  HE  SI   S   F  CL  BR   I   X 
+-------------------------------------------------------------------------------------------------------------------
+    1                  N2     2.801e+01     0   0   0   0   0   0   0   2   0   0   0   0   0   0   0   0   0   0 
+    2                  NE     2.018e+01     0   0   0   0   0   0   0   0   1   0   0   0   0   0   0   0   0   0 
+    3               H2(2)     2.016e+00     2   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0 
+    4               CO(3)     2.801e+01     0   0   0   1   0   1   0   0   0   0   0   0   0   0   0   0   0   0 
+    5              CO2(4)     4.401e+01     0   0   0   1   0   2   0   0   0   0   0   0   0   0   0   0   0   0 
+    6              H2O(5)     1.802e+01     2   0   0   0   0   1   0   0   0   0   0   0   0   0   0   0   0   0 
+    7             CH2O(6)     3.003e+01     2   0   0   1   0   1   0   0   0   0   0   0   0   0   0   0   0   0 
+    8            HCOOH(7)     4.603e+01     2   0   0   1   0   2   0   0   0   0   0   0   0   0   0   0   0   0 
+    9            CH3OH(8)     3.204e+01     4   0   0   1   0   1   0   0   0   0   0   0   0   0   0   0   0   0 
+   10          HCOOCH3(9)     6.005e+01     4   0   0   2   0   2   0   0   0   0   0   0   0   0   0   0   0   0 
+   11             CH4(24)     1.604e+01     4   0   0   1   0   0   0   0   0   0   0   0   0   0   0   0   0   0 
+
+Number of surface species in the mechanism : 18
+-------------------------------------------------------------------------------------------------------------------
+  No.           Name            Mass        Element content
+                                            H   D   T   C  CI   O  OI   N  NE  AR  HE  SI   S   F  CL  BR   I   X 
+-------------------------------------------------------------------------------------------------------------------
+    1                X(1)     1.951e+02     0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   1 
+    2              H*(10)     1.961e+02     1   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   1 
+    3              O*(11)     2.111e+02     0   0   0   0   0   1   0   0   0   0   0   0   0   0   0   0   0   1 
+    4             OH*(12)     2.121e+02     1   0   0   0   0   1   0   0   0   0   0   0   0   0   0   0   0   1 
+    5            H2O*(13)     2.131e+02     2   0   0   0   0   1   0   0   0   0   0   0   0   0   0   0   0   1 
+    6             CO*(14)     2.231e+02     0   0   0   1   0   1   0   0   0   0   0   0   0   0   0   0   0   1 
+    7            CO2*(15)     2.391e+02     0   0   0   1   0   2   0   0   0   0   0   0   0   0   0   0   0   1 
+    8            HCO*(16)     2.241e+02     1   0   0   1   0   1   0   0   0   0   0   0   0   0   0   0   0   1 
+    9           HCOO*(17)     2.401e+02     1   0   0   1   0   2   0   0   0   0   0   0   0   0   0   0   0   1 
+   10           COOH*(18)     2.401e+02     1   0   0   1   0   2   0   0   0   0   0   0   0   0   0   0   0   1 
+   11          HCOOH*(19)     2.411e+02     2   0   0   1   0   2   0   0   0   0   0   0   0   0   0   0   0   1 
+   12           CH2O*(20)     2.251e+02     2   0   0   1   0   1   0   0   0   0   0   0   0   0   0   0   0   1 
+   13           CH3O*(21)     2.261e+02     3   0   0   1   0   1   0   0   0   0   0   0   0   0   0   0   0   1 
+   14          CH3O2*(22)     2.421e+02     3   0   0   1   0   2   0   0   0   0   0   0   0   0   0   0   0   1 
+   15          CH3OH*(23)     2.271e+02     4   0   0   1   0   1   0   0   0   0   0   0   0   0   0   0   0   1 
+   16             H2X(51)     1.971e+02     2   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   1 
+   17            COXX(63)     4.182e+02     0   0   0   1   0   1   0   0   0   0   0   0   0   0   0   0   0   2 
+   18           CHOX2(64)     4.192e+02     1   0   0   1   0   1   0   0   0   0   0   0   0   0   0   0   0   2 
+
+Number of reactions in the mechanism : 135
+---------------------------------------------------------------------
+Pre-exponential factor and activation energy units : moles & kcal/mole
+---------------------------------------------------------------------
+   1-> 2X(1) + H2(2) <=> 2H*(10)
+    --> STICK
+    --> Arrhenius coefficients (forward) :  3.2000e-02   0.00   0.0000e+00
+
+   2-> X(1) + CO(3) <=> CO*(14)
+    --> STICK
+    --> Arrhenius coefficients (forward) :  5.0000e-01   0.00   0.0000e+00
+
+   3-> OH*(12) + HCO*(16) <=> H*(10) + COOH*(18)
+    --> Arrhenius coefficients (forward) :  2.2800e+20   0.26   3.8000e+00
+
+   4-> X(1) + H2O(5) <=> H2O*(13)
+    --> STICK
+    --> Arrhenius coefficients (forward) :  1.0000e-01   0.00   0.0000e+00
+
+   5-> X(1) + CO2(4) <=> CO2*(15)
+    --> STICK
+    --> Arrhenius coefficients (forward) :  7.0000e-06   0.00   1.7350e+00
+
+   6-> H*(10) + CO2(4) <=> HCOO*(17)
+    --> STICK
+    --> Arrhenius coefficients (forward) :  1.0000e-01   0.00   1.7462e+01
+
+   7-> HCOO*(17) <=> COOH*(18)
+    --> Arrhenius coefficients (forward) :  1.1129e+12   0.00   1.4465e+01
+
+   8-> H*(10) + CO2(4) <=> COOH*(18)
+    --> STICK
+    --> Arrhenius coefficients (forward) :  1.0000e-01   0.00   1.7462e+01
+
+   9-> X(1) + HCOOH(7) <=> HCOOH*(19)
+    --> STICK
+    --> Arrhenius coefficients (forward) :  1.0000e-01   0.00   0.0000e+00
+
+  10-> X(1) + CH2O(6) <=> CH2O*(20)
+    --> STICK
+    --> Arrhenius coefficients (forward) :  1.0000e-01   0.00   0.0000e+00
+
+  11-> H*(10) + CH2O(6) <=> CH3O*(21)
+    --> STICK
+    --> Arrhenius coefficients (forward) :  5.0000e-02   0.00   1.7462e+01
+
+  12-> OH*(12) + CH2O(6) <=> CH3O2*(22)
+    --> STICK
+    --> Arrhenius coefficients (forward) :  5.0000e-02   0.00   1.7462e+01
+
+  13-> H*(10) + HCOOH(7) <=> CH3O2*(22)
+    --> STICK
+    --> Arrhenius coefficients (forward) :  5.0000e-02   0.00   1.7462e+01
+
+  14-> X(1) + CH3OH(8) <=> CH3OH*(23)
+    --> STICK
+    --> Arrhenius coefficients (forward) :  1.0000e-01   0.00   0.0000e+00
+
+  15-> 2X(1) + CO2(4) <=> O*(11) + CO*(14)
+    --> STICK
+    --> Arrhenius coefficients (forward) :  2.0000e-02   0.00   1.0000e+01
+
+  16-> 2X(1) + H2O(5) <=> H*(10) + OH*(12)
+    --> STICK
+    --> Arrhenius coefficients (forward) :  3.2000e-02   0.00   1.4250e+01
+
+  17-> 2X(1) + CH2O(6) <=> H*(10) + HCO*(16)
+    --> STICK
+    --> Arrhenius coefficients (forward) :  3.2000e-02   0.00   0.0000e+00
+
+  18-> 2X(1) + HCOOH(7) <=> OH*(12) + HCO*(16)
+    --> STICK
+    --> Arrhenius coefficients (forward) :  1.6000e-02   0.00   6.7720e+00
+
+  19-> 2X(1) + HCOOH(7) <=> H*(10) + HCOO*(17)
+    --> STICK
+    --> Arrhenius coefficients (forward) :  1.6000e-02   0.00   0.0000e+00
+
+  20-> 2X(1) + HCOOH(7) <=> H*(10) + COOH*(18)
+    --> STICK
+    --> Arrhenius coefficients (forward) :  1.6000e-02   0.00   0.0000e+00
+
+  21-> 2X(1) + CH3OH(8) <=> H*(10) + CH3O*(21)
+    --> STICK
+    --> Arrhenius coefficients (forward) :  1.6000e-02   0.00   3.6290e+00
+
+  22-> 2X(1) + HCOOCH3(9) <=> HCO*(16) + CH3O*(21)
+    --> STICK
+    --> Arrhenius coefficients (forward) :  1.6000e-02   0.00   1.1780e+00
+
+  23-> X(1) + OH*(12) <=> O*(11) + H*(10)
+    --> Arrhenius coefficients (forward) :  7.4520e+21   0.00   3.8742e+01
+
+  24-> X(1) + H2O*(13) <=> H*(10) + OH*(12)
+    --> Arrhenius coefficients (forward) :  4.8790e+19   0.00   1.8445e+01
+
+  25-> O*(11) + CO*(14) <=> X(1) + CO2*(15)
+    --> Arrhenius coefficients (forward) :  4.0600e+20   0.00   1.4989e+01
+
+  26-> H*(10) + CO*(14) <=> X(1) + HCO*(16)
+    --> Arrhenius coefficients (forward) :  3.1400e+21   0.00   2.2830e+01
+
+  27-> H*(10) + CO2*(15) <=> X(1) + HCOO*(17)
+    --> Arrhenius coefficients (forward) :  1.2430e+22   0.00   2.0063e+01
+
+  28-> X(1) + HCOO*(17) <=> O*(11) + HCO*(16)
+    --> Arrhenius coefficients (forward) :  8.7330e+20   0.00   1.0838e+01
+
+  29-> X(1) + COOH*(18) <=> H*(10) + CO2*(15)
+    --> Arrhenius coefficients (forward) :  8.0280e+21   0.00   2.8364e+01
+
+  30-> OH*(12) + CO*(14) <=> X(1) + COOH*(18)
+    --> Arrhenius coefficients (forward) :  4.0200e+18   0.00   2.7490e+00
+
+  31-> X(1) + HCOOH*(19) <=> OH*(12) + HCO*(16)
+    --> Arrhenius coefficients (forward) :  1.7810e+21   0.00   3.7589e+01
+
+  32-> H*(10) + HCOO*(17) <=> X(1) + HCOOH*(19)
+    --> Arrhenius coefficients (forward) :  4.4240e+22   0.00   2.0985e+01
+
+  33-> H*(10) + COOH*(18) <=> X(1) + HCOOH*(19)
+    --> Arrhenius coefficients (forward) :  2.3080e+22   0.00   1.6834e+01
+
+  34-> H*(10) + HCO*(16) <=> X(1) + CH2O*(20)
+    --> Arrhenius coefficients (forward) :  1.9320e+21   0.00   1.0838e+01
+
+  35-> H*(10) + CH2O*(20) <=> X(1) + CH3O*(21)
+    --> Arrhenius coefficients (forward) :  6.1670e+21   0.00   5.5350e+00
+
+  36-> X(1) + CH3O2*(22) <=> OH*(12) + CH2O*(20)
+    --> Arrhenius coefficients (forward) :  3.4010e+21   0.00   1.7065e+01
+
+  37-> H*(10) + HCOOH*(19) <=> X(1) + CH3O2*(22)
+    --> Arrhenius coefficients (forward) :  2.1220e+23   0.00   2.3983e+01
+
+  38-> H*(10) + CH3O*(21) <=> X(1) + CH3OH*(23)
+    --> Arrhenius coefficients (forward) :  4.3490e+26   0.00   1.0838e+01
+
+  39-> O*(11) + CH2O*(20) <=> H*(10) + HCOO*(17)
+    --> Arrhenius coefficients (forward) :  4.8724e+19   0.64   2.8743e+01
+
+  40-> H2O*(13) + CO*(14) <=> H*(10) + COOH*(18)
+    --> Arrhenius coefficients (forward) :  2.0739e+17   0.94   2.9088e+01
+
+  41-> OH*(12) + CH2O*(20) <=> H*(10) + HCOOH*(19)
+    --> Arrhenius coefficients (forward) :  2.0000e+17   0.00   0.0000e+00
+
+  42-> H*(10) + HCOOH*(19) <=> H2O*(13) + HCO*(16)
+    --> Arrhenius coefficients (forward) :  1.0000e+17   0.00   0.0000e+00
+
+  43-> O*(11) + CH3OH*(23) <=> H*(10) + CH3O2*(22)
+    --> Arrhenius coefficients (forward) :  7.3086e+19   0.64   2.8743e+01
+
+  44-> H2O*(13) + CH2O*(20) <=> H*(10) + CH3O2*(22)
+    --> Arrhenius coefficients (forward) :  6.7613e+13   1.18   2.2574e+01
+
+  45-> 2OH*(12) <=> O*(11) + H2O*(13)
+    --> Arrhenius coefficients (forward) :  5.6910e+20   0.00   1.4067e+01
+
+  46-> O*(11) + HCO*(16) <=> OH*(12) + CO*(14)
+    --> Arrhenius coefficients (forward) :  3.2980e+21   0.00   0.0000e+00
+
+  47-> OH*(12) + CO2*(15) <=> O*(11) + HCOO*(17)
+    --> Arrhenius coefficients (forward) :  3.6280e+20   0.00   9.6850e+00
+
+  48-> OH*(12) + CO2*(15) <=> O*(11) + COOH*(18)
+    --> Arrhenius coefficients (forward) :  3.6280e+20   0.00   9.6850e+00
+
+  49-> O*(11) + HCOOH*(19) <=> OH*(12) + HCOO*(17)
+    --> This reaction is a duplicate -1
+    --> Arrhenius coefficients (forward) :  1.1745e+14   1.22   1.5738e+01
+
+  50-> O*(11) + HCOOH*(19) <=> OH*(12) + HCOO*(17)
+    --> This reaction is a duplicate -1
+    --> Arrhenius coefficients (forward) :  4.2243e+14   1.38   3.5330e+01
+
+  51-> O*(11) + HCOOH*(19) <=> OH*(12) + COOH*(18)
+    --> Arrhenius coefficients (forward) :  1.4050e+24  -0.10   2.2156e+01
+
+  52-> O*(11) + CH2O*(20) <=> OH*(12) + HCO*(16)
+    --> Arrhenius coefficients (forward) :  2.8100e+24  -0.10   2.2156e+01
+
+  53-> OH*(12) + CH2O*(20) <=> O*(11) + CH3O*(21)
+    --> Arrhenius coefficients (forward) :  1.8140e+20   0.00   9.6850e+00
+
+  54-> OH*(12) + HCOOH*(19) <=> O*(11) + CH3O2*(22)
+    --> Arrhenius coefficients (forward) :  1.8140e+20   0.00   1.5681e+01
+
+  55-> O*(11) + CH3OH*(23) <=> OH*(12) + CH3O*(21)
+    --> This reaction is a duplicate -1
+    --> Arrhenius coefficients (forward) :  1.1745e+14   1.22   1.7199e+01
+
+  56-> O*(11) + CH3OH*(23) <=> OH*(12) + CH3O*(21)
+    --> This reaction is a duplicate -1
+    --> Arrhenius coefficients (forward) :  4.2243e+14   1.38   3.5330e+01
+
+  57-> OH*(12) + HCO*(16) <=> H2O*(13) + CO*(14)
+    --> Arrhenius coefficients (forward) :  3.2610e+21   0.00   6.9180e+00
+
+  58-> O*(11) + HCOOH*(19) <=> OH*(12) + HCOO*(17)
+    --> This reaction is a duplicate -1
+    --> Arrhenius coefficients (forward) :  1.1745e+14   1.22   1.5738e+01
+
+  59-> O*(11) + HCOOH*(19) <=> OH*(12) + HCOO*(17)
+    --> This reaction is a duplicate -1
+    --> Arrhenius coefficients (forward) :  4.2243e+14   1.38   3.5330e+01
+
+  60-> H2O*(13) + CO2*(15) <=> OH*(12) + HCOO*(17)
+    --> Arrhenius coefficients (forward) :  1.3523e+14   1.18   2.2574e+01
+
+  61-> OH*(12) + COOH*(18) <=> H2O*(13) + CO2*(15)
+    --> Arrhenius coefficients (forward) :  3.3980e+21   0.00   0.0000e+00
+
+  62-> OH*(12) + HCOOH*(19) <=> H2O*(13) + HCOO*(17)
+    --> Arrhenius coefficients (forward) :  1.0000e+17   0.00   0.0000e+00
+
+  63-> OH*(12) + HCOOH*(19) <=> H2O*(13) + COOH*(18)
+    --> Arrhenius coefficients (forward) :  1.0000e+17   0.00   0.0000e+00
+
+  64-> OH*(12) + CH2O*(20) <=> H2O*(13) + HCO*(16)
+    --> Arrhenius coefficients (forward) :  2.0000e+17   0.00   0.0000e+00
+
+  65-> O*(11) + CH3OH*(23) <=> OH*(12) + CH3O*(21)
+    --> This reaction is a duplicate -1
+    --> Arrhenius coefficients (forward) :  1.1745e+14   1.22   1.7199e+01
+
+  66-> O*(11) + CH3OH*(23) <=> OH*(12) + CH3O*(21)
+    --> This reaction is a duplicate -1
+    --> Arrhenius coefficients (forward) :  4.2243e+14   1.38   3.5330e+01
+
+  67-> H2O*(13) + CH2O*(20) <=> OH*(12) + CH3O*(21)
+    --> Arrhenius coefficients (forward) :  6.7613e+13   1.18   2.2574e+01
+
+  68-> H2O*(13) + HCOOH*(19) <=> OH*(12) + CH3O2*(22)
+    --> Arrhenius coefficients (forward) :  6.7613e+13   1.18   3.7599e+01
+
+  69-> OH*(12) + CH3OH*(23) <=> H2O*(13) + CH3O*(21)
+    --> Arrhenius coefficients (forward) :  1.0000e+17   0.00   0.0000e+00
+
+  70-> CO2*(15) + HCO*(16) <=> CO*(14) + HCOO*(17)
+    --> Arrhenius coefficients (forward) :  3.6280e+20   0.00   9.6850e+00
+
+  71-> CO2*(15) + HCO*(16) <=> CO*(14) + COOH*(18)
+    --> Arrhenius coefficients (forward) :  3.6280e+20   0.00   9.6850e+00
+
+  72-> HCO*(16) + HCOO*(17) <=> CO*(14) + HCOOH*(19)
+    --> Arrhenius coefficients (forward) :  7.4750e+22   0.00   1.3836e+01
+
+  73-> CO*(14) + HCOOH*(19) <=> HCO*(16) + COOH*(18)
+    --> This reaction is a duplicate -1
+    --> Arrhenius coefficients (forward) :  1.0370e+17   0.94   2.9088e+01
+
+  74-> CO*(14) + HCOOH*(19) <=> HCO*(16) + COOH*(18)
+    --> This reaction is a duplicate -1
+    --> Arrhenius coefficients (forward) :  1.0370e+17   0.94   2.9088e+01
+
+  75-> CO*(14) + CH2O*(20) <=> 2HCO*(16)
+    --> Arrhenius coefficients (forward) :  2.0739e+17   0.94   2.9088e+01
+
+  76-> HCO*(16) + CH2O*(20) <=> CO*(14) + CH3O*(21)
+    --> Arrhenius coefficients (forward) :  3.3980e+21   0.00   0.0000e+00
+
+  77-> COOH*(18) + CH2O*(20) <=> CO*(14) + CH3O2*(22)
+    --> Arrhenius coefficients (forward) :  1.8140e+20   0.00   9.6850e+00
+
+  78-> HCO*(16) + HCOOH*(19) <=> CO*(14) + CH3O2*(22)
+    --> Arrhenius coefficients (forward) :  1.8140e+20   0.00   1.4360e+01
+
+  79-> HCO*(16) + CH3O*(21) <=> CO*(14) + CH3OH*(23)
+    --> Arrhenius coefficients (forward) :  6.5720e+20   0.00   8.7630e+00
+
+  80-> CO2*(15) + HCOOH*(19) <=> 2HCOO*(17)
+    --> Arrhenius coefficients (forward) :  6.7613e+13   1.18   2.2574e+01
+
+  81-> CO2*(15) + HCOOH*(19) <=> COOH*(18) + HCOO*(17)
+    --> This reaction is a duplicate -1
+    --> Arrhenius coefficients (forward) :  6.7613e+13   1.18   2.2574e+01
+
+  82-> CO2*(15) + HCOOH*(19) <=> COOH*(18) + HCOO*(17)
+    --> This reaction is a duplicate -1
+    --> Arrhenius coefficients (forward) :  6.7613e+13   1.18   2.2574e+01
+
+  83-> CO2*(15) + HCOOH*(19) <=> 2COOH*(18)
+    --> Arrhenius coefficients (forward) :  6.7613e+13   1.18   2.2574e+01
+
+  84-> CO2*(15) + CH2O*(20) <=> HCO*(16) + HCOO*(17)
+    --> Arrhenius coefficients (forward) :  1.3523e+14   1.18   2.2574e+01
+
+  85-> CO2*(15) + CH2O*(20) <=> HCO*(16) + COOH*(18)
+    --> Arrhenius coefficients (forward) :  1.3523e+14   1.18   2.2574e+01
+
+  86-> CO2*(15) + CH3OH*(23) <=> HCOO*(17) + CH3O*(21)
+    --> Arrhenius coefficients (forward) :  6.7613e+13   1.18   2.2574e+01
+
+  87-> CO2*(15) + CH3OH*(23) <=> COOH*(18) + CH3O*(21)
+    --> Arrhenius coefficients (forward) :  6.7613e+13   1.18   2.2574e+01
+
+  88-> CO*(14) + HCOOH*(19) <=> HCO*(16) + COOH*(18)
+    --> This reaction is a duplicate -1
+    --> Arrhenius coefficients (forward) :  1.0370e+17   0.94   2.9088e+01
+
+  89-> CO*(14) + HCOOH*(19) <=> HCO*(16) + COOH*(18)
+    --> This reaction is a duplicate -1
+    --> Arrhenius coefficients (forward) :  1.0370e+17   0.94   2.9088e+01
+
+  90-> HCOO*(17) + CH2O*(20) <=> HCO*(16) + HCOOH*(19)
+    --> Arrhenius coefficients (forward) :  2.0000e+17   0.00   0.0000e+00
+
+  91-> COOH*(18) + CH2O*(20) <=> HCO*(16) + HCOOH*(19)
+    --> Arrhenius coefficients (forward) :  2.0000e+17   0.00   0.0000e+00
+
+  92-> 2CH2O*(20) <=> HCO*(16) + CH3O*(21)
+    --> Arrhenius coefficients (forward) :  6.7613e+13   1.18   2.2574e+01
+
+  93-> CH2O*(20) + HCOOH*(19) <=> HCO*(16) + CH3O2*(22)
+    --> This reaction is a duplicate -1
+    --> Arrhenius coefficients (forward) :  3.3806e+13   1.18   2.2574e+01
+
+  94-> CH2O*(20) + HCOOH*(19) <=> HCO*(16) + CH3O2*(22)
+    --> This reaction is a duplicate -1
+    --> Arrhenius coefficients (forward) :  6.7613e+13   1.18   2.2574e+01
+
+  95-> CH2O*(20) + CH3O*(21) <=> HCO*(16) + CH3OH*(23)
+    --> Arrhenius coefficients (forward) :  2.0000e+17   0.00   0.0000e+00
+
+  96-> CO2*(15) + HCOOH*(19) <=> COOH*(18) + HCOO*(17)
+    --> This reaction is a duplicate -1
+    --> Arrhenius coefficients (forward) :  6.7613e+13   1.18   2.2574e+01
+
+  97-> CO2*(15) + HCOOH*(19) <=> COOH*(18) + HCOO*(17)
+    --> This reaction is a duplicate -1
+    --> Arrhenius coefficients (forward) :  6.7613e+13   1.18   2.2574e+01
+
+  98-> COOH*(18) + HCOOH*(19) <=> HCOO*(17) + HCOOH*(19)
+    --> Arrhenius coefficients (forward) :  1.0000e+17   0.00   0.0000e+00
+
+  99-> CH2O*(20) + HCOOH*(19) <=> HCOO*(17) + CH3O*(21)
+    --> Arrhenius coefficients (forward) :  3.3806e+13   1.18   2.2574e+01
+
+ 100-> 2HCOOH*(19) <=> HCOO*(17) + CH3O2*(22)
+    --> Arrhenius coefficients (forward) :  3.3806e+13   1.18   2.2574e+01
+
+ 101-> HCOOH*(19) + CH3O*(21) <=> HCOO*(17) + CH3OH*(23)
+    --> Arrhenius coefficients (forward) :  1.0000e+17   0.00   0.0000e+00
+
+ 102-> CH2O*(20) + HCOOH*(19) <=> COOH*(18) + CH3O*(21)
+    --> Arrhenius coefficients (forward) :  3.3806e+13   1.18   2.2574e+01
+
+ 103-> 2HCOOH*(19) <=> COOH*(18) + CH3O2*(22)
+    --> Arrhenius coefficients (forward) :  3.3806e+13   1.18   2.2828e+01
+
+ 104-> HCOOH*(19) + CH3O*(21) <=> COOH*(18) + CH3OH*(23)
+    --> Arrhenius coefficients (forward) :  1.0000e+17   0.00   0.0000e+00
+
+ 105-> CH2O*(20) + HCOOH*(19) <=> HCO*(16) + CH3O2*(22)
+    --> This reaction is a duplicate -1
+    --> Arrhenius coefficients (forward) :  6.7613e+13   1.18   2.2574e+01
+
+ 106-> CH2O*(20) + HCOOH*(19) <=> HCO*(16) + CH3O2*(22)
+    --> This reaction is a duplicate -1
+    --> Arrhenius coefficients (forward) :  3.3806e+13   1.18   2.2574e+01
+
+ 107-> HCOOH*(19) + CH3OH*(23) <=> CH3O*(21) + CH3O2*(22)
+    --> Arrhenius coefficients (forward) :  3.3806e+13   1.18   3.2751e+01
+
+ 108-> CH2O*(20) + CH3OH*(23) <=> 2CH3O*(21)
+    --> Arrhenius coefficients (forward) :  3.3806e+13   1.18   2.2574e+01
+
+ 109-> X(1) + H2(2) <=> H2X(51)
+    --> STICK
+    --> Arrhenius coefficients (forward) :  1.0000e-01   0.00   0.0000e+00
+
+ 110-> O*(11) + H2X(51) <=> H*(10) + OH*(12)
+    --> Arrhenius coefficients (forward) :  4.8724e+19   0.64   2.8743e+01
+
+ 111-> OH*(12) + H2X(51) <=> H*(10) + H2O*(13)
+    --> Arrhenius coefficients (forward) :  2.0000e+17   0.00   0.0000e+00
+
+ 112-> H2X(51) + CO*(14) <=> H*(10) + HCO*(16)
+    --> Arrhenius coefficients (forward) :  2.0739e+17   0.94   2.9088e+01
+
+ 113-> H2X(51) + CO2*(15) <=> H*(10) + HCOO*(17)
+    --> Arrhenius coefficients (forward) :  1.3523e+14   1.18   2.2574e+01
+
+ 114-> H2X(51) + CO2*(15) <=> H*(10) + COOH*(18)
+    --> Arrhenius coefficients (forward) :  1.3523e+14   1.18   2.2574e+01
+
+ 115-> H2X(51) + HCOO*(17) <=> H*(10) + HCOOH*(19)
+    --> Arrhenius coefficients (forward) :  2.0000e+17   0.00   0.0000e+00
+
+ 116-> H2X(51) + COOH*(18) <=> H*(10) + HCOOH*(19)
+    --> Arrhenius coefficients (forward) :  2.0000e+17   0.00   0.0000e+00
+
+ 117-> H*(10) + CH2O*(20) <=> H2X(51) + HCO*(16)
+    --> Arrhenius coefficients (forward) :  2.0000e+17   0.00   0.0000e+00
+
+ 118-> H2X(51) + CH2O*(20) <=> H*(10) + CH3O*(21)
+    --> Arrhenius coefficients (forward) :  6.7613e+13   1.18   2.2574e+01
+
+ 119-> H2X(51) + HCOOH*(19) <=> H*(10) + CH3O2*(22)
+    --> Arrhenius coefficients (forward) :  6.7613e+13   1.18   2.2574e+01
+
+ 120-> H2X(51) + CH3O*(21) <=> H*(10) + CH3OH*(23)
+    --> Arrhenius coefficients (forward) :  2.0000e+17   0.00   0.0000e+00
+
+ 121-> X(1) + CO*(14) <=> COXX(63)
+    --> Arrhenius coefficients (forward) :  4.2700e+19   0.55   1.4901e+01
+
+ 122-> X(1) + HCO*(16) <=> CHOX2(64)
+    --> Arrhenius coefficients (forward) :  4.2700e+19   0.55   1.4097e+01
+
+ 123-> X(1) + CHOX2(64) <=> H*(10) + COXX(63)
+    --> Arrhenius coefficients (forward) :  3.7100e+21   0.00   0.0000e+00
+
+ 124-> OH*(12) + COXX(63) <=> O*(11) + CHOX2(64)
+    --> Arrhenius coefficients (forward) :  4.4000e+22   0.10   1.0134e+01
+
+ 125-> H2O*(13) + COXX(63) <=> OH*(12) + CHOX2(64)
+    --> Arrhenius coefficients (forward) :  2.0739e+17   0.94   2.9088e+01
+
+ 126-> COXX(63) + HCO*(16) <=> CO*(14) + CHOX2(64)
+    --> Arrhenius coefficients (forward) :  1.2046e+22   0.05   5.0670e+00
+
+ 127-> CO2*(15) + CHOX2(64) <=> COXX(63) + HCOO*(17)
+    --> Arrhenius coefficients (forward) :  3.6280e+20   0.00   9.6850e+00
+
+ 128-> CO2*(15) + CHOX2(64) <=> COXX(63) + COOH*(18)
+    --> Arrhenius coefficients (forward) :  3.6280e+20   0.00   9.6850e+00
+
+ 129-> COXX(63) + HCOOH*(19) <=> CHOX2(64) + HCOO*(17)
+    --> Arrhenius coefficients (forward) :  1.0370e+17   0.94   2.9088e+01
+
+ 130-> COXX(63) + HCOOH*(19) <=> CHOX2(64) + COOH*(18)
+    --> Arrhenius coefficients (forward) :  1.0370e+17   0.94   2.9088e+01
+
+ 131-> COXX(63) + CH2O*(20) <=> HCO*(16) + CHOX2(64)
+    --> Arrhenius coefficients (forward) :  2.0739e+17   0.94   2.9088e+01
+
+ 132-> CHOX2(64) + CH2O*(20) <=> COXX(63) + CH3O*(21)
+    --> Arrhenius coefficients (forward) :  1.8140e+20   0.00   9.6850e+00
+
+ 133-> CHOX2(64) + HCOOH*(19) <=> COXX(63) + CH3O2*(22)
+    --> Arrhenius coefficients (forward) :  1.8140e+20   0.00   1.5636e+01
+
+ 134-> COXX(63) + CH3OH*(23) <=> CHOX2(64) + CH3O*(21)
+    --> Arrhenius coefficients (forward) :  1.0370e+17   0.94   2.9088e+01
+
+ 135-> H2X(51) + COXX(63) <=> H*(10) + CHOX2(64)
+    --> Arrhenius coefficients (forward) :  2.0739e+17   0.94   2.9088e+01
+

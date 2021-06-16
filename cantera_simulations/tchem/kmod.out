@@ -20,7 +20,7 @@ Number of elements in the mechanism : 18
    17       I     1.269e+02
    18       X     1.951e+02
 
-Number of species in the mechanism : 10
+Number of species in the mechanism : 11
 -------------------------------------------------------------------------------------------------------------------
   No.           Name            Mass        Element content
                                             H   D   T   C  CI   O  OI   N  NE  AR  HE  SI   S   F  CL  BR   I   X 
@@ -35,8 +35,9 @@ Number of species in the mechanism : 10
     8            HCOOH(7)     4.603e+01     2   0   0   1   0   2   0   0   0   0   0   0   0   0   0   0   0   0 
     9            CH3OH(8)     3.204e+01     4   0   0   1   0   1   0   0   0   0   0   0   0   0   0   0   0   0 
    10          HCOOCH3(9)     6.005e+01     4   0   0   2   0   2   0   0   0   0   0   0   0   0   0   0   0   0 
+   11             CH4(24)     1.604e+01     4   0   0   1   0   0   0   0   0   0   0   0   0   0   0   0   0   0 
 
-Number of reactions in the mechanism : 6
+Number of reactions in the mechanism : 7
 ---------------------------------------------------------------------
 Pre-exponential factor and activation energy units : moles & kcal/mole
 ---------------------------------------------------------------------
@@ -53,11 +54,14 @@ Pre-exponential factor and activation energy units : moles & kcal/mole
    4-> CO(3) + CH3OH(8) <=> HCOOCH3(9)
     --> Arrhenius coefficients (forward) :  1.2700e-01   3.70   5.3360e+01
 
-   5-> H2(2) + CO2(4) <=> HCOOH(7)
+   5-> CO2(4) + CH4(24) <=> HCOOCH3(9)
+    --> Arrhenius coefficients (forward) :  3.6240e+04   2.83   7.9200e+01
+
+   6-> H2(2) + CO2(4) <=> HCOOH(7)
     --> This reaction is a duplicate 2
     --> Arrhenius coefficients (forward) :  1.5100e+09   1.23   7.3900e+01
 
-   6-> H2(2) + CO2(4) <=> HCOOH(7)
+   7-> H2(2) + CO2(4) <=> HCOOH(7)
     --> This reaction is a duplicate 2
     --> Arrhenius coefficients (forward) :  1.5100e+09   1.23   7.3900e+01
 
