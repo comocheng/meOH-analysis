@@ -20,11 +20,9 @@ import logging
 from collections import defaultdict
 import git
 import time
-from IPython.display import display
 
 from rmgpy.molecule import Molecule
 from rmgpy.data.base import Database
-
 
 def save_pictures(git_path="", species_path="", overwrite=False):
     """
@@ -45,6 +43,72 @@ def save_pictures(git_path="", species_path="", overwrite=False):
             continue
         species.molecule[0].draw(filepath)
 
+def prettydot(species_path="", dotfilepath="", strip_line_labels=False):
+    """
+    Make a prettier version of the dot file (flux diagram)
+
+    Assumes the species pictures are stored in a directory
+    called 'species_pictures' alongside the dot file.
+    """
+    pictures_directory = f'{species_path}/'
+
+    if strip_line_labels:
+        print("stripping edge (line) labels")
+
+    reSize = re.compile('size="5,6"\;page="5,6"')
+    reNode = re.compile(
+        '(?P<node>s\d+)\ \[\ fontname="Helvetica",\ label="(?P<label>[^"]*)"\]\;'
+    )
+
+    rePicture = re.compile("(?P<smiles>.+?)\((?P<id>\d+)\)\.png")
+    reLabel = re.compile("(?P<name>.+?)\((?P<id>\d+)\)$")
+
+    species_pictures = dict()
+    for picturefile in os.listdir(pictures_directory):
+        match = rePicture.match(picturefile)
+        if match:
+            species_pictures[match.group("id")] = picturefile
+        else:
+            pass
+            # print(picturefile, "didn't look like a picture")
+
+    filepath = dotfilepath
+
+    if not open(filepath).readline().startswith("digraph"):
+        raise ValueError("{0} - not a digraph".format(filepath))
+
+    infile = open(filepath)
+    prettypath = filepath.replace(".dot", "", 1) + "-pretty.dot"
+    outfile = open(prettypath, "w")
+
+    for line in infile:
+        (line, changed_size) = reSize.subn('size="12,12";page="12,12"', line)
+        match = reNode.search(line)
+        if match:
+            label = match.group("label")
+            idmatch = reLabel.match(label)
+            if idmatch:
+                idnumber = idmatch.group("id")
+                if idnumber in species_pictures:
+                    line = (
+                        f'%s [ image="{pictures_directory}%s" label="" width="0.5" height="0.5" imagescale=false fixedsize=false color="none" ];\n'
+                        % (match.group("node"), species_pictures[idnumber])
+                    )
+
+        # rankdir="LR" to make graph go left>right instead of top>bottom
+        if strip_line_labels:
+            line = re.sub('label\s*=\s*"\s*[\d.]+"', 'label=""', line)
+
+        # change colours
+        line = re.sub('color="0.7,\ (.*?),\ 0.9"', r'color="1.0, \1, 0.7*\1"', line)
+
+        outfile.write(line)
+
+    outfile.close()
+    infile.close()
+    print(f"Graph saved to: {prettypath}")
+    os.system(f'dot {prettypath} -Tpng -o{prettypath.replace(".dot", "", 1) + ".png"} -Gdpi=200')
+    return prettypath
 
 def prettydot(species_path="", dotfilepath="", strip_line_labels=False):
     """
@@ -166,7 +230,7 @@ def save_flux_diagrams(*phases, suffix="", timepoint="", species_path=""):
             img_path = os.path.join(os.getcwd(), img_file)
             diagram.write_dot(dot_file)
 
-            # also make a prettydot file
+            #also make a prettydot file
             prettydot(species_path, dot_file, strip_line_labels=False)
 
             # print(diagram.get_data())
@@ -177,7 +241,52 @@ def save_flux_diagrams(*phases, suffix="", timepoint="", species_path=""):
             os.system(f"dot {dot_file} -Tpng -o{img_file} -Gdpi=200")
             print(f"Wrote graphviz output file to '{img_path}'.")
 
+############################################################################################
+# Edited part to get Graaf conditions
+# Julia Treese
+# get Graaf conditions into a list of lists to run
 
+            
+file_name_feed1 = "/home/treese.j/Graaf_data/Feed_1.csv"
+file_name_feed2 = "/home/treese.j/Graaf_data/Feed_2.csv"
+file_name_feed3 = "/home/treese.j/Graaf_data/Feed_3.csv"
+file_name_feed4 = "/home/treese.j/Graaf_data/Feed_4.csv"
+file_name_feed5 = "/home/treese.j/Graaf_data/Feed_5.csv"
+file_name_inlets = "/home/treese.j/Graaf_data/Feed_Inlets.csv"
+
+df_inlet = pd.read_csv(file_name_inlets)
+df_1 = pd.read_csv(file_name_feed1)
+df_2 = pd.read_csv(file_name_feed2)
+df_3 = pd.read_csv(file_name_feed3)
+df_4 = pd.read_csv(file_name_feed4)
+df_5 = pd.read_csv(file_name_feed5)
+
+
+# Needed: [T, P, V, YH2, YCO2] -- Create a list of lists
+# Should be columns 2 (T), 1 (P), 3 (V), 6 (YH2), 5 (YCO2)
+# Each list is the conditions of one experimental Graaf run
+
+# List of dataframes with feed conditions
+df_list = [df_1, df_2, df_3, df_4, df_5]
+
+# Loop through dataframes and create a list of conditions based on Graaf runs
+# Loop through each row in the dataframes and add that row's conditions to the list of lists
+
+settings = []
+
+for i in range(len(df_list)):
+    df = df_list[i]
+    for row in range(len(df)):
+        row_conditions = [df.iloc[row, df.columns.get_loc('T (K)')], 
+                          df.iloc[row, df.columns.get_loc('p (bar)')], 
+                          df.iloc[row,df.columns.get_loc('V (M^3/s)')], 
+                          df_inlet.iloc[i,3], 
+                          df_inlet.iloc[i,2]]
+        settings.append(row_conditions)
+
+###########################################################################################
+            
+            
 def run_reactor(
     cti_file,
     rmg_model_path,
@@ -196,6 +305,8 @@ def run_reactor(
     reactime=1e5,
     grabow=False,
 ):
+
+
     try:
         array_i = int(os.getenv("SLURM_ARRAY_TASK_ID"))
     except TypeError:
@@ -225,7 +336,10 @@ def run_reactor(
         sensitivity_str = "off"
 
     # this should probably be outside of function
-    settings = list(itertools.product(t_array, p_array, v_array, h2_array, co2_array))
+    # settings = list(itertools.product(t_array, p_array, v_array, h2_array, co2_array))
+#     settings=[[500, 15, 0.000423, 0.1, 0.2],
+#               [500, 15, 0.002233, 0.1, 0.2],
+#               []...]
 
     # constants
     pi = math.pi
@@ -237,13 +351,11 @@ def run_reactor(
 
     X_h2 = settings[array_i][3]
     x_h2_str = str(X_h2)[0:3].replace(".", "_")
-    x_CO_CO2_str = str(settings[array_i][4])[0:3].replace(".", "_")
+    x_CO2_str = str(settings[array_i][4])[0:3].replace(".", "_")
 
     # Per Grabow experiments, add in H2O for X=0.75 H2 run
-    if X_h2 == 0.75:
-        X_h2o = 0.05
-    else:
-        X_h2o = 0
+   
+    X_h2o = 0
 
     X_co = (1 - (X_h2 + X_h2o)) * (settings[array_i][4])
     X_co2 = (1 - (X_h2 + X_h2o)) * (1 - settings[array_i][4])
@@ -413,7 +525,7 @@ def run_reactor(
     output_filename = (
         results_path
         + f"/Spinning_basket_area_{cat_area_str}_energy_{energy}"
-        + f"_temp_{temp}_h2_{x_h2_str}_COCO2_{x_CO_CO2_str}.csv"
+        + f"_temp_{temp}_h2_{x_h2_str}_COCO2_{x_CO2_str}.csv"
     )
     output_filename_csp = (
         results_path_csp
@@ -644,7 +756,6 @@ def run_reactor(
     save_flux_diagrams(gas, suffix=flux_path, timepoint="end", species_path=species_path)
     save_flux_diagrams(surf, suffix=flux_path, timepoint="end", species_path=species_path)
     return
-
 
 #######################################################################
 # Input Parameters for combustor
