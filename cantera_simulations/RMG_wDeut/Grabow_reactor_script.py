@@ -91,7 +91,7 @@ def prettydot(species_path="", dotfilepath="", strip_line_labels=False):
                 idnumber = idmatch.group("id")
                 if idnumber in species_pictures:
                     line = (
-                        f'%s [ image="{pictures_directory}%s" label="" width="0.5" height="0.5" imagescale=false fixedsize=false color="none" ];\n'
+                        f'%s [ image="{pictures_directory}%s" label="" width="0.5" height="0.5" imagescale=true fixedsize=false color="none" ];\n'
                         % (match.group("node"), species_pictures[idnumber])
                     )
 
@@ -107,7 +107,7 @@ def prettydot(species_path="", dotfilepath="", strip_line_labels=False):
     outfile.close()
     infile.close()
     print(f"Graph saved to: {prettypath}")
-    os.system(f'dot {prettypath} -Tpng -o{prettypath.replace(".dot", "", 1) + ".png"} -Gdpi=200')
+    os.system(f'dot {prettypath} -Tpng -o{prettypath.replace(".dot", "", 1) + ".png"} -Gdpi=300')
     return prettypath
 
 def show_flux_diagrams(self, suffix="", embed=False):
@@ -189,6 +189,7 @@ def run_reactor(
     sensatol=1e-6,
     sensrtol=1e-6,
     reactime=1e5,
+    grabow=False,
 ):
 
 
@@ -196,15 +197,25 @@ def run_reactor(
         array_i = int(os.getenv("SLURM_ARRAY_TASK_ID"))
     except TypeError:
         array_i = 0
-
-    # get git commit hash and message
-    rmg_model_path = "/work/westgroup/ChrisB/meoh-synthesis_RMG/meOH-synthesis"
-    repo = git.Repo(rmg_model_path)
-    date = time.localtime(repo.head.commit.committed_date)
-    git_date = f"{date[0]}_{date[1]}_{date[2]}_{date[3]}{date[4]}"
-    git_sha = str(repo.head.commit)[0:6]
-    git_msg = str(repo.head.commit.message)[0:50].replace(" ", "_").replace("'", "_").replace("\n", "")
-    git_file_string = f"{git_date}_{git_sha}_{git_msg}"
+    
+    if grabow: 
+        # format grabow model the same as the others
+        rmg_model_path = "/work/westgroup/ChrisB/meoh-synthesis_RMG/meOH-synthesis"
+        repo = git.Repo(rmg_model_path)
+        date = time.localtime()
+        git_date = "0000_00_00_0000"
+        git_sha = '000000'
+        git_msg = "Grabow model"
+        git_file_string = f"{git_date}_{git_sha}_{git_msg}"      
+    else:
+        # get git commit hash and message
+        rmg_model_path = "/work/westgroup/ChrisB/meoh-synthesis_RMG/meOH-synthesis"
+        repo = git.Repo(rmg_model_path)
+        date = time.localtime(repo.head.commit.committed_date)
+        git_date = time.strftime("%Y_%m_%d_%H%M", date)
+        git_sha = str(repo.head.commit)[0:6]
+        git_msg = str(repo.head.commit.message)[0:50].replace(" ", "_").replace("'", "_").replace("\n", "")
+        git_file_string = f"{git_date}_{git_sha}_{git_msg}"
 
     # set sensitivity string for file path name
     if sensitivity:
@@ -250,7 +261,10 @@ def run_reactor(
     h2_ratio = (X_co2 + X_co) / X_h2
 
     # CO/CO2/H2/H2: typical is
-    concentrations_rmg = {"CO(3)": X_co, "CO2(4)": X_co2, "H2(2)": X_h2, "H2O(5)": X_h2o,}
+    if grabow:
+        concentrations_rmg = {"CO": X_co, "CO2": X_co2, "H2": X_h2, "H2O": X_h2o,}
+    else:
+        concentrations_rmg = {"CO(3)": X_co, "CO2(4)": X_co2, "H2(2)": X_h2, "H2O(5)": X_h2o,}
 
     # initialize cantera gas and surface
     gas = ct.Solution(cti_file, "gas")
@@ -264,10 +278,16 @@ def run_reactor(
     # cantera will normalize the mole fractions. 
     # make sure that we are reporting/using 
     # the normalized values
-    X_co = float(gas["CO(3)"].X)
-    X_co2 = float(gas["CO2(4)"].X)
-    X_h2 = float(gas["H2(2)"].X)
-    X_h2o = float(gas["H2O(5)"].X)
+    if grabow:
+        X_co = float(gas["CO"].X)
+        X_co2 = float(gas["CO2"].X)
+        X_h2 = float(gas["H2"].X)
+        X_h2o = float(gas["H2O"].X)
+    else:           
+        X_co = float(gas["CO(3)"].X)
+        X_co2 = float(gas["CO2(4)"].X)
+        X_h2 = float(gas["H2(2)"].X)
+        X_h2o = float(gas["H2O(5)"].X)
 
 
     # create gas inlet
@@ -306,8 +326,10 @@ def run_reactor(
     # calculate the available catalyst area in a differential reactor
     rsurf = ct.ReactorSurface(surf, r, A=cat_area)
     r.volume = rvol
-    surf.coverages = "X(1):1.0"
-
+    if grabow:
+        surf.coverages = "X:1.0"
+    else:
+        surf.coverages = "X(1):1.0"
     # flow controllers (Graaf measured flow at 293.15 and 1 atm)
     one_atm = ct.one_atm
     FC_temp = 293.15
@@ -389,7 +411,6 @@ def run_reactor(
 
     gasrxn_ROP_str = [i + " ROP [kmol/m^3 s]" for i in gas.reaction_equations()]
     surfrxn_ROP_str = [i + " ROP [kmol/m^2 s]" for i in surf.reaction_equations()]
-
     output_filename = (
         results_path
         + f"/Spinning_basket_area_{cat_area_str}_energy_{energy}"
@@ -440,8 +461,9 @@ def run_reactor(
 
         writer.writerow(
             [
-                "T (C)",
-                "P (atm)",
+                "time (s)",
+                "T (K)",
+                "P (Pa)",
                 "V (M^3/s)",
                 "X_co initial",
                 "X_co2initial",
@@ -468,8 +490,9 @@ def run_reactor(
     else:
         writer.writerow(
             [
-                "T (C)",
-                "P (atm)",
+                "time (s)",
+                "T (K)",
+                "P (Pa)",
                 "V (M^3/s)",
                 "X_co initial",
                 "X_co2 initial",
@@ -514,8 +537,15 @@ def run_reactor(
             first_run = False
         t += dt
         sim.advance(t)
-#         if t % 10 < 0.01:
+        # if t % 10 < 0.01:
 
+        # some models have the special case where they do not have any gas
+        # gas phase reactions. if this is true, skip over gas ROPs
+        if len(gas.reactions()) > 0: 
+              gas_net_rates_of_progress = list(gas.net_rates_of_progress)
+        else: 
+              gas_net_rates_of_progress = []
+              
         if sensitivity:
             # get sensitivity for sensitive species i (e.g. methanol) in reaction j
             for i in sens_species:
@@ -541,6 +571,7 @@ def run_reactor(
 
             writer.writerow(
                 [
+                    sim.time,
                     temp,
                     pressure,
                     volume_flow,
@@ -560,7 +591,7 @@ def run_reactor(
                 + list(surf.X)
                 + list(gas.net_production_rates)
                 + list(surf.net_production_rates)
-                + list(gas.net_rates_of_progress)
+                + gas_net_rates_of_progress
                 + list(surf.net_rates_of_progress)
                 + sensitivities_all
             )
@@ -568,6 +599,7 @@ def run_reactor(
         else:
             writer.writerow(
                 [
+                    sim.time,
                     temp,
                     pressure,
                     volume_flow,
@@ -587,7 +619,7 @@ def run_reactor(
                 + list(surf.X)
                 + list(gas.net_production_rates)
                 + list(surf.net_production_rates)
-                + list(gas.net_rates_of_progress)
+                + gas_net_rates_of_progress
                 + list(surf.net_rates_of_progress)
             )
 
@@ -611,8 +643,8 @@ def run_reactor(
     
     
     # save flux diagrams at the end of the run
-    save_flux_diagrams(gas, suffix=flux_path, timepoint="end")
-    save_flux_diagrams(surf, suffix=flux_path, timepoint="end")
+    save_flux_diagrams(gas, suffix=flux_path, timepoint="end", species_path=species_path)
+    save_flux_diagrams(surf, suffix=flux_path, timepoint="end", species_path=species_path)
     return
 
 #######################################################################
@@ -622,9 +654,9 @@ def run_reactor(
 # filepath for writing files
 # cti_file = os.path.dirname(os.path.abspath(__file__)) +'/chem_annotated.cti'
 cti_file = "/work/westgroup/ChrisB/meoh-synthesis_RMG/meOH-synthesis/base/cantera/chem_annotated.cti"
-
+# cti_file = "/work/westgroup/ChrisB/meOH-synthesis_cantera/meOH-synthesis/External_data/mech_grabow_new.cti"
 # Reactor settings arrays for run
-Temps = [400, 500, 600]
+Temps = [400, 500, 528, 600]
 Pressures = [15, 30, 50, 75]
 volume_flows = [0.00424, 0.0106, 0.02544]
 
@@ -641,13 +673,15 @@ H2_fraction = [0.8, 0.5, 0.95, 0.75]
 CO_CO2_ratio = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 
 # reaction time
-reactime = 1e3
+reactime = 1e4
 
 # sensitivity settings
 sensitivity = False
 sensatol = 1e-6
 sensrtol = 1e-6
 
+grabow = False              
+              
 run_reactor(
     cti_file=cti_file,
     t_array=Temps,
@@ -659,6 +693,7 @@ run_reactor(
     sensatol=sensatol,
     sensrtol=sensrtol,
     reactime=reactime,
+    grabow=grabow
 )
 
 
