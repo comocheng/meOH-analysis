@@ -8,3 +8,5 @@
 *end.png
 *.json
 *.ipynb_checkpoints*
+*.dat
+*__pycache__*
