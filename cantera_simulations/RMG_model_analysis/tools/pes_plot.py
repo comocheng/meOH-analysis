@@ -228,10 +228,10 @@ class pes_plot():
         species, 
         width, 
         height, 
-        offset,
-        dimension,
-        space,
-        combined,
+        offset=None,
+        dimension=None,
+        space=None,
+        combined=True,
         ):
         """
         plots a potential energy surface given an input for species, 
@@ -329,10 +329,14 @@ class pes_plot():
             self.diagram.add_link(i.links[0],i.links[1])
             self.diagram.add_link(i.links[1],i.links[2])
 
+        # optional arguements 
+        if space: 
+            self.diagram.space = space
+        if offset:
+            self.diagram.offset = offset
+        if dimension:
+            self.diagram.dimension = dimension
 
-        self.diagram.space = space
-        self.diagram.offset = offset
-        self.diagram.dimension = dimension
         self.diagram.plot(show_IDs=True, ylabel="Energy / $eV$", width=width, height=height)
 
 
