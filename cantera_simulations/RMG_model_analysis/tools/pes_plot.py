@@ -1,5 +1,8 @@
 import cantera as ct
+import os
 import sys
+sys.path.append(f'{os.getcwd()}/tools/PyEnergyDiagram')
+print(os.getcwd())
 from energydiagram import ED
 import logging
 
@@ -325,7 +328,6 @@ class pes_plot():
         
         for i in pes_rxn_dict.values():
             # get connections between each reac - Ea and each Ea-product
-            print(len(self.diagram.links))
             self.diagram.add_link(i.links[0],i.links[1])
             self.diagram.add_link(i.links[1],i.links[2])
 
