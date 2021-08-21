@@ -180,6 +180,7 @@ def save_flux_diagrams(*phases, suffix="", timepoint="", species_path=""):
 
 def run_reactor(
     cti_file,
+    rmg_model_path,
     t_array=[528],
     p_array=[75],
     v_array=[0.00424],
@@ -202,7 +203,6 @@ def run_reactor(
 
     if grabow:
         # format grabow model the same as the others
-        rmg_model_path = "/work/westgroup/ChrisB/meoh-synthesis_RMG/meOH-synthesis"
         repo = git.Repo(rmg_model_path)
         date = time.localtime()
         git_date = "0000_00_00_0000"
@@ -211,7 +211,6 @@ def run_reactor(
         git_file_string = f"{git_date}_{git_sha}_{git_msg}"
     else:
         # get git commit hash and message
-        rmg_model_path = "/work/westgroup/ChrisB/meoh-synthesis_RMG/meOH-synthesis"
         repo = git.Repo(rmg_model_path)
         date = time.localtime(repo.head.commit.committed_date)
         git_date = time.strftime("%Y_%m_%d_%H%M", date)
@@ -652,10 +651,17 @@ def run_reactor(
 #######################################################################
 
 # filepath for writing files
-# cti_file = os.path.dirname(os.path.abspath(__file__)) +'/chem_annotated.cti'
-# cti_file = "/work/westgroup/ChrisB/meoh-synthesis_RMG/meOH-synthesis/base/cantera/chem_annotated.cti"
-cti_file = "/home/moon/methanol/meOH-synthesis/base/cantera/chem_annotated.cti"
-# cti_file = "/work/westgroup/ChrisB/meOH-synthesis_cantera/meOH-synthesis/External_data/mech_grabow_new.cti"
+if len(sys.argv) == 3:
+    # Pass the cti file and rmg file as an argument to the script
+    cti_file = sys.argv[1]
+    rmg_file = sys.argv[2]
+else:
+    # cti_file = os.path.dirname(os.path.abspath(__file__)) +'/chem_annotated.cti'
+    cti_file = "/work/westgroup/ChrisB/meoh-synthesis_RMG/meOH-synthesis/base/cantera/chem_annotated.cti"
+    # cti_file = "/work/westgroup/ChrisB/meOH-synthesis_cantera/meOH-synthesis/External_data/mech_grabow_new.cti"
+    rmg_file = "/work/westgroup/ChrisB/meoh-synthesis_RMG/meOH-synthesis"
+
+
 # Reactor settings arrays for run
 Temps = [400, 500, 528, 600]
 Pressures = [15, 30, 50, 75]
@@ -685,6 +691,7 @@ grabow = False
 
 run_reactor(
     cti_file=cti_file,
+    rmg_model_path=rmg_file,
     t_array=Temps,
     reactor_type=1,
     h2_array=H2_fraction,
