@@ -20,9 +20,11 @@ import logging
 from collections import defaultdict
 import git
 import time
+from IPython.display import display
 
 from rmgpy.molecule import Molecule
 from rmgpy.data.base import Database
+
 
 def save_pictures(git_path="", species_path="", overwrite=False):
     """
@@ -43,6 +45,7 @@ def save_pictures(git_path="", species_path="", overwrite=False):
             continue
         species.molecule[0].draw(filepath)
 
+
 def prettydot(species_path="", dotfilepath="", strip_line_labels=False):
     """
     Make a prettier version of the dot file (flux diagram)
@@ -55,13 +58,13 @@ def prettydot(species_path="", dotfilepath="", strip_line_labels=False):
     if strip_line_labels:
         print("stripping edge (line) labels")
 
-    reSize = re.compile('size="5,6"\;page="5,6"')
+    reSize = re.compile(r'size="5,6"\;page="5,6"')
     reNode = re.compile(
-        '(?P<node>s\d+)\ \[\ fontname="Helvetica",\ label="(?P<label>[^"]*)"\]\;'
+        r'(?P<node>s\d+)\ \[\ fontname="Helvetica",\ label="(?P<label>[^"]*)"\]\;'
     )
 
-    rePicture = re.compile("(?P<smiles>.+?)\((?P<id>\d+)\)\.png")
-    reLabel = re.compile("(?P<name>.+?)\((?P<id>\d+)\)$")
+    rePicture = re.compile(r"(?P<smiles>.+?)\((?P<id>\d+)\)\.png")
+    reLabel = re.compile(r"(?P<name>.+?)\((?P<id>\d+)\)$")
 
     species_pictures = dict()
     for picturefile in os.listdir(pictures_directory):
@@ -97,10 +100,10 @@ def prettydot(species_path="", dotfilepath="", strip_line_labels=False):
 
         # rankdir="LR" to make graph go left>right instead of top>bottom
         if strip_line_labels:
-            line = re.sub('label\s*=\s*"\s*[\d.]+"', 'label=""', line)
+            line = re.sub(r'label\s*=\s*"\s*[\d.]+"', 'label=""', line)
 
         # change colours
-        line = re.sub('color="0.7,\ (.*?),\ 0.9"', r'color="1.0, \1, 0.7*\1"', line)
+        line = re.sub(r'color="0.7,\ (.*?),\ 0.9"', r'color="1.0, \1, 0.7*\1"', line)
 
         outfile.write(line)
 
@@ -109,6 +112,7 @@ def prettydot(species_path="", dotfilepath="", strip_line_labels=False):
     print(f"Graph saved to: {prettypath}")
     os.system(f'dot {prettypath} -Tpng -o{prettypath.replace(".dot", "", 1) + ".png"} -Gdpi=300')
     return prettypath
+
 
 def show_flux_diagrams(self, suffix="", embed=False):
     """
@@ -162,7 +166,7 @@ def save_flux_diagrams(*phases, suffix="", timepoint="", species_path=""):
             img_path = os.path.join(os.getcwd(), img_file)
             diagram.write_dot(dot_file)
 
-            #also make a prettydot file
+            # also make a prettydot file
             prettydot(species_path, dot_file, strip_line_labels=False)
 
             # print(diagram.get_data())
@@ -191,14 +195,12 @@ def run_reactor(
     reactime=1e5,
     grabow=False,
 ):
-
-
     try:
         array_i = int(os.getenv("SLURM_ARRAY_TASK_ID"))
     except TypeError:
         array_i = 0
-    
-    if grabow: 
+
+    if grabow:
         # format grabow model the same as the others
         rmg_model_path = "/work/westgroup/ChrisB/meoh-synthesis_RMG/meOH-synthesis"
         repo = git.Repo(rmg_model_path)
@@ -206,7 +208,7 @@ def run_reactor(
         git_date = "0000_00_00_0000"
         git_sha = '000000'
         git_msg = "Grabow model"
-        git_file_string = f"{git_date}_{git_sha}_{git_msg}"      
+        git_file_string = f"{git_date}_{git_sha}_{git_msg}"
     else:
         # get git commit hash and message
         rmg_model_path = "/work/westgroup/ChrisB/meoh-synthesis_RMG/meOH-synthesis"
@@ -220,7 +222,7 @@ def run_reactor(
     # set sensitivity string for file path name
     if sensitivity:
         sensitivity_str = "on"
-    else: 
+    else:
         sensitivity_str = "off"
 
     # this should probably be outside of function
@@ -262,9 +264,9 @@ def run_reactor(
 
     # CO/CO2/H2/H2: typical is
     if grabow:
-        concentrations_rmg = {"CO": X_co, "CO2": X_co2, "H2": X_h2, "H2O": X_h2o,}
+        concentrations_rmg = {"CO": X_co, "CO2": X_co2, "H2": X_h2, "H2O": X_h2o, }
     else:
-        concentrations_rmg = {"CO(3)": X_co, "CO2(4)": X_co2, "H2(2)": X_h2, "H2O(5)": X_h2o,}
+        concentrations_rmg = {"CO(3)": X_co, "CO2(4)": X_co2, "H2(2)": X_h2, "H2O(5)": X_h2o, }
 
     # initialize cantera gas and surface
     gas = ct.Solution(cti_file, "gas")
@@ -274,21 +276,20 @@ def run_reactor(
     gas.TPX = temp, pressure, concentrations_rmg
     surf.TP = temp, pressure
 
-    # if a mistake is made with the input, 
-    # cantera will normalize the mole fractions. 
-    # make sure that we are reporting/using 
+    # if a mistake is made with the input,
+    # cantera will normalize the mole fractions.
+    # make sure that we are reporting/using
     # the normalized values
     if grabow:
         X_co = float(gas["CO"].X)
         X_co2 = float(gas["CO2"].X)
         X_h2 = float(gas["H2"].X)
         X_h2o = float(gas["H2O"].X)
-    else:           
+    else:
         X_co = float(gas["CO(3)"].X)
         X_co2 = float(gas["CO2(4)"].X)
         X_h2 = float(gas["H2(2)"].X)
         X_h2o = float(gas["H2O(5)"].X)
-
 
     # create gas inlet
     inlet = ct.Reservoir(gas)
@@ -299,7 +300,7 @@ def run_reactor(
     # Reactor volume (divide by 2 per Graaf paper)
     rradius = 35e-3
     rlength = 70e-3
-    rvol = (rradius ** 2) * pi * rlength/2
+    rvol = (rradius ** 2) * pi * rlength / 2
 
     # Catalyst Surface Area
     site_density = (
@@ -307,7 +308,7 @@ def run_reactor(
     )  # [mol/m^2]cantera uses kmol/m^2, convert to mol/m^2
     cat_weight = 4.24e-3  # [kg]
     cat_site_per_wt = (300 * 1e-6) * 1000  # [mol/kg] 1e-6mol/micromole, 1000g/kg
-    cat_area = (cat_weight * cat_site_per_wt)/site_density  # [m^2]
+    cat_area = (cat_weight * cat_site_per_wt) / site_density  # [m^2]
 
     # reactor initialization
     if reactor_type == 0:
@@ -366,8 +367,7 @@ def run_reactor(
     )
     print(species_path)
     results_path = (
-        os.path.dirname(os.path.abspath(__file__))
-       + f"/{git_file_string}/{reactor_type_str}/energy_{energy}/sensitivity_{sensitivity_str}/{temp_str}/results"
+        os.path.dirname(os.path.abspath(__file__)) + f"/{git_file_string}/{reactor_type_str}/energy_{energy}/sensitivity_{sensitivity_str}/{temp_str}/results"
     )
     results_path_csp = (
         os.path.dirname(os.path.abspath(__file__))
@@ -401,7 +401,7 @@ def run_reactor(
         os.makedirs(flux_path, exist_ok=True)
     except OSError as error:
         print(error)
-    
+
     gas_ROP_str = [i + " ROP [kmol/m^3 s]" for i in gas.species_names]
 
     # surface ROP reports gas and surface ROP. these values might be redundant, not sure.
@@ -425,9 +425,9 @@ def run_reactor(
     outfile_csp = open(output_filename_csp, "w")
     writer = csv.writer(outfile)
     writer_csp = csv.writer(outfile_csp, delimiter='\t')
-              
-    logging.warning(results_path+output_filename)
-              
+
+    logging.warning(results_path + output_filename)
+
     # Sensitivity atol, rtol, and strings for gas and surface reactions if selected
     # slows down script by a lot
     if sensitivity:
@@ -514,10 +514,10 @@ def run_reactor(
             + gasrxn_ROP_str
             + surfrxn_ROP_str
         )
-    # only run csp writer up to 100 seconds. todo: make built in criteria for steady state (ss achieved flag?)        
-    if sim.time < 100: 
+    # only run csp writer up to 100 seconds. todo: make built in criteria for steady state (ss achieved flag?)
+    if sim.time < 100:
         writer_csp.writerow(
-            ["iter", "t", "dt", "Density[kg/m3]", "Pressure[Pascal]", "Temperature[K]",]
+            ["iter", "t", "dt", "Density[kg/m3]", "Pressure[Pascal]", "Temperature[K]", ]
             + gas.species_names
             + surf.species_names
         )
@@ -530,7 +530,7 @@ def run_reactor(
 
     while t < reactime:
         # save flux diagrams at beginning of run
-        if first_run == True:
+        if first_run is True:
             save_flux_diagrams(gas, suffix=flux_path, timepoint="beginning", species_path=species_path)
             save_flux_diagrams(surf, suffix=flux_path, timepoint="beginning", species_path=species_path)
 
@@ -541,11 +541,11 @@ def run_reactor(
 
         # some models have the special case where they do not have any gas
         # gas phase reactions. if this is true, skip over gas ROPs
-        if len(gas.reactions()) > 0: 
-              gas_net_rates_of_progress = list(gas.net_rates_of_progress)
-        else: 
-              gas_net_rates_of_progress = []
-              
+        if len(gas.reactions()) > 0:
+            gas_net_rates_of_progress = list(gas.net_rates_of_progress)
+        else:
+            gas_net_rates_of_progress = []
+
         if sensitivity:
             # get sensitivity for sensitive species i (e.g. methanol) in reaction j
             for i in sens_species:
@@ -640,12 +640,12 @@ def run_reactor(
 
     outfile.close()
     outfile_csp.close()
-    
-    
+
     # save flux diagrams at the end of the run
     save_flux_diagrams(gas, suffix=flux_path, timepoint="end", species_path=species_path)
     save_flux_diagrams(surf, suffix=flux_path, timepoint="end", species_path=species_path)
     return
+
 
 #######################################################################
 # Input Parameters for combustor
@@ -653,7 +653,8 @@ def run_reactor(
 
 # filepath for writing files
 # cti_file = os.path.dirname(os.path.abspath(__file__)) +'/chem_annotated.cti'
-cti_file = "/work/westgroup/ChrisB/meoh-synthesis_RMG/meOH-synthesis/base/cantera/chem_annotated.cti"
+# cti_file = "/work/westgroup/ChrisB/meoh-synthesis_RMG/meOH-synthesis/base/cantera/chem_annotated.cti"
+cti_file = "/home/moon/methanol/meOH-synthesis/base/cantera/chem_annotated.cti"
 # cti_file = "/work/westgroup/ChrisB/meOH-synthesis_cantera/meOH-synthesis/External_data/mech_grabow_new.cti"
 # Reactor settings arrays for run
 Temps = [400, 500, 528, 600]
@@ -680,8 +681,8 @@ sensitivity = False
 sensatol = 1e-6
 sensrtol = 1e-6
 
-grabow = False              
-              
+grabow = False
+
 run_reactor(
     cti_file=cti_file,
     t_array=Temps,
@@ -695,6 +696,3 @@ run_reactor(
     reactime=reactime,
     grabow=grabow
 )
-
-
-
