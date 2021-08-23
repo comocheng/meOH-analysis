@@ -28,7 +28,7 @@ class ED:
         self.offset_ratio = 0.02
         self.color_bottom_text = 'blue'
         self.aspect = aspect
-        # data
+        self.data = []
         self.pos_number = 0
         self.energies = []
         self.positions = []
@@ -242,7 +242,7 @@ class ED:
 
         fig.set_figwidth(width)
         fig.set_figheight(height)
-        data = list(zip(self.energies,  # 0
+        self.data = list(zip(self.energies,  # 0
                         self.positions,  # 1
                         self.bottom_texts,  # 2
                         self.top_texts,  # 3
@@ -250,7 +250,7 @@ class ED:
                         self.right_texts,  # 5
                         self.left_texts,))  # 6
 
-        for level in data:
+        for level in self.data:
             start = level[1]*(self.dimension+self.space)
             ax.hlines(level[0], start, start + self.dimension, color=level[4])
             ax.text(start+self.dimension/2.,  # X
@@ -281,7 +281,7 @@ class ED:
                     color=self.color_bottom_text)
         if show_IDs:
             # for showing the ID allowing the user to identify the level
-            for ind, level in enumerate(data):
+            for ind, level in enumerate(self.data):
                 start = level[1]*(self.dimension+self.space)
                 ax.text(start, level[0]+self.offset, str(ind),
                         horizontalalignment='right', color='red')

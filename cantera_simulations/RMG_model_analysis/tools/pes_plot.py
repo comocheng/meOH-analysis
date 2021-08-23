@@ -35,6 +35,8 @@ class pes_reaction_combine():
     equation - string, cantera reaction equation
     links - list of ids for connecting the diagram
             [reactant id, Ea id, product id]
+    positions - int, list of positions for reactants, reactions, and products. 
+            [reactant pos, Reaction Ea pos, product pos]
     """
     def __init__(
         self,
@@ -47,6 +49,8 @@ class pes_reaction_combine():
         self.reactants  = {}
         self.products  = {}
         self.links = [-1,-1,-1]
+        self.positions = [-1, -1, -1]
+
 
         # lookup each reactant, put in dictionary as 
         # {species_name : enthalpy at phase temp (in Ev) * stoich coeff}
@@ -62,13 +66,10 @@ class pes_reaction_combine():
 
             reac_str += f"{i} "
             total_reac_enth += reaction.reactants[i] * (phase.species(i).thermo.h(phase.T)/1000**2)/96
-        
-        self.links[0] = -1
 
         reac_str = reac_str.strip()
         self.reactants[reac_str] = total_reac_enth 
         self.reactants[reac_str] = round(self.reactants[reac_str],3)
-        self.links[1] = -1
 
         total_prod_enth = 0
         prod_str = ""
@@ -83,7 +84,6 @@ class pes_reaction_combine():
             prod_str += f"{i} "
             total_prod_enth += reaction.products[i] * (phase.species(i).thermo.h(phase.T)/1000**2)/96
         
-        self.links[2] = -1
         prod_str = prod_str.strip()
         self.products[prod_str] = total_prod_enth 
         self.products[prod_str] = round(self.products[prod_str],3)
@@ -184,6 +184,7 @@ class pes_plot():
         self.gas.TP = self.temp, self.pressure
         self.surf.TP = self.temp, self.pressure
 
+
     def get_h_ev(self, species, temp):
         """
         gets species enthalpy in eV. 
@@ -210,19 +211,27 @@ class pes_plot():
         """
         rxns = {}
         species_names = [i.name for i in species]
-        species_ea = self.get_h_ev(species[1], temp)
+        species_ea = 0 
+        print(species_names)
+        # get combined H for species as the starting point for Ea
+        for i in species:
+            species_ea += self.get_h_ev(i, temp)
         
-        for i,j in enumerate(self.gas.reaction_equations()):
-            if all(x in j for x in species_names):
-                rxns[j] = self.gas.reaction(i)
-                Ea = species_ea + (self.gas.reaction(i).rate.activation_energy/1000**2)/96
-                print(j, Ea)
+        for i,j in enumerate(self.gas.reactions()):
+            if all(x in j.reactants.keys() for x in species_names):
+                rxns[j.equation] = j
+                Ea = species_ea + (j.rate.activation_energy/1000**2)/96
+                print(j.equation, Ea)
                 
-        for i,j in enumerate(self.surf.reaction_equations()):
-            if all(x in j for x in species_names):
-                rxns[j] = self.surf.reaction(i)
-                Ea = species_ea + (self.surf.reaction(i).rate.activation_energy/1000**2)/96
-                print(j, Ea)
+        for i,j in enumerate(self.surf.reactions()):
+            if all(x in j.reactants.keys() for x in species_names):
+                rxns[j.equation] = j
+                Ea = species_ea + (j.rate.activation_energy/1000**2)/96
+                print(j.equation, Ea)
+        
+        # if no reactions are found, throw an error
+        if len(rxns)==0:
+            raise Exception(f"no reactions found with reactants {species}")
                 
         return rxns
 
@@ -237,19 +246,25 @@ class pes_plot():
         combined=True,
         ):
         """
-        plots a potential energy surface given an input for species, 
+        plots a potential energy surface given an input for species.
+        the "species" are the starting point for the mechanism. each successive 
+        run will take an input of the species and get all reactions for that pair. 
 
         inputs:
-        species - str or a list of strs matching species name in cantera mechanism.
-        width - float matplotlib plot width in inches
-        height - float matplotlib plot height in inches
-        offset - float vertical distance that energy level and upper/lower labels are spaced
-        dimension - float width of platform used for energy level 
-        space - float distance between bars for energy levels
-        combined - bool if true combine all reactants to a single energy level. do the same for products.
+        species - (str or [strs]) matching starting reactant species name in cantera mechanism.
+        width - (float) matplotlib plot width in inches
+        height - (float) matplotlib plot height in inches
+        offset - (float) vertical distance that energy level and upper/lower labels are spaced
+        dimension - (float) width of platform used for energy level 
+        space - (float) distance between bars for energy levels
+        combined - (bool) if true combine all reactants to a single energy level. do the same for products.
         """
+
         # create reaction diagram object
         self.diagram = ED()
+
+        # initialize the reaction object dictionary
+        self.pes_rxn_dict = {}
 
         # get a list of all reactions containing the two species identified
         species_obj = []
@@ -258,75 +273,62 @@ class pes_plot():
                 species_obj.append(self.gas.species(i))
             elif i in self.surf.species_names:
                 species_obj.append(self.surf.species(i))
+            else:
+                print(f'species {i} not found!')
 
         rxns = self.find_reactions(species_obj, self.temp)
 
         # for each reaction, make a "pes_rxn" object. add to a dict.  
         # contains information for enthalpy and barriers
-        pes_rxn_dict = {}
-
         for i,j in rxns.items():
+
             # create pes_rxns
             if combined:
-                pes_rxn_dict[i] = pes_reaction_combine(j, self.gas, self.surf)
+                self.pes_rxn_dict[i] = pes_reaction_combine(j, self.gas, self.surf)
             else: 
-                pes_rxn_dict[i] = pes_reaction(j, self.gas, self.surf)
+                self.pes_rxn_dict[i] = pes_reaction(j, self.gas, self.surf)
 
-        first = True
+
+
         link_num = 0
         for i,j in rxns.items():
             # generate a pes plot for each pes_reaction
-            for k,l in pes_rxn_dict[i].reactants.items():
+            for k,l in self.pes_rxn_dict[i].reactants.items():
                 reac = k
                 H_r = l
 
-                # if it is the first one, make a new energy level
-                if first:
-                    self.diagram.add_level( H_r, k)
-                    first = False
-                else:
-                    self.diagram.add_level(H_r, k,'l')
+                # make a new energy level
+                self.diagram.add_level(H_r, k,0)
                     
-            pes_rxn_dict[i].links[0] = link_num
+            self.pes_rxn_dict[i].links[0] = link_num
             link_num+=1
 
-
-        first = True
         for i,j in rxns.items():   
             # plot rxn Ea. for it to show up between species, should be here
-            rxn_eq = pes_rxn_dict[i].equation
-            rxn_Ea = pes_rxn_dict[i].barrier
+            rxn_eq = self.pes_rxn_dict[i].equation
+            rxn_Ea = self.pes_rxn_dict[i].barrier
 
-            # if it is the first one, make a new energy level
-            if first: 
-                self.diagram.add_level(rxn_Ea, rxn_eq)
-                first = False
-            else:
-                self.diagram.add_level(rxn_Ea, rxn_eq, 'l')
+            # make a new energy level
+            self.diagram.add_level(rxn_Ea, rxn_eq, 1)
             
-            pes_rxn_dict[i].links[1] = link_num
+            self.pes_rxn_dict[i].links[1] = link_num
             link_num+=1
 
-        first = True
-        for i,j in rxns.items():  
+        for i,j in rxns.items():
             # generate a pes plot for each pes_reaction 
-            for k,l in pes_rxn_dict[i].products.items():
+            for k,l in self.pes_rxn_dict[i].products.items():
                 prod = k
                 H_p = l
 
-                # if it is the first one, make a new energy level
-                if first:
-                    self.diagram.add_level(H_p, prod)
-                    first = False
-                else:
-                    self.diagram.add_level(H_p, prod,'l')
+                # make a new energy level
+                self.diagram.add_level(H_p, prod,2)
 
             # add link id for line drawing
-            pes_rxn_dict[i].links[2] = link_num
+            self.pes_rxn_dict[i].links[2] = link_num
             link_num+=1
 
         
-        for i in pes_rxn_dict.values():
+        for i in self.pes_rxn_dict.values():
             # get connections between each reac - Ea and each Ea-product
             self.diagram.add_link(i.links[0],i.links[1])
             self.diagram.add_link(i.links[1],i.links[2])
@@ -341,7 +343,101 @@ class pes_plot():
 
         self.diagram.plot(show_IDs=True, ylabel="Energy / $eV$", width=width, height=height)
 
+    def add_next_reaction(
+        self, 
+        species, 
+        width, 
+        height, 
+        offset=None,
+        dimension=None,
+        space=None,
+        ):
+        """
+        adds the next reaction to the plot. 
+        
+        species is the product species selected for the next step
+        """
+
+        # get a list of all reactions containing the two species identified
+        species_obj = []
+        for i in species:
+            if i in self.gas.species_names:
+                species_obj.append(self.gas.species(i))
+            elif i in self.surf.species_names:
+                species_obj.append(self.surf.species(i))
+
+        rxns = self.find_reactions(species_obj, self.temp)
+
+        # ED.position can be assigned to an integer (1,2,3,4, etc) 
+        # so we do not need to use "l"
+        # get starting position
+        starting_pos = max(self.diagram.positions)
+
+        # get number of starting species for drawing links
+        species_str = ""
+        for i in species:
+            species_str += f"{i} "
+        
+        species_str = species_str.strip()
+        for i,j in enumerate(self.diagram.data):
+            if species_str in j:
+                link_num = i + 1
+
+        # for each reaction, make a "pes_rxn" object. add to a dict.  
+        # contains information for enthalpy and barriers
+        for i,j in rxns.items():
+            # create pes_rxns
+            self.pes_rxn_dict[i] = pes_reaction_combine(j, self.gas, self.surf)
 
 
+        for i,j in rxns.items():
+            # generate a pes plot for each pes_reaction
+            for k,l in self.pes_rxn_dict[i].reactants.items():
+                reac = k
+                H_r = l
 
-    
+                # make a new energy level
+                self.diagram.add_level(H_r, k, starting_pos)
+                    
+            self.pes_rxn_dict[i].links[0] = link_num
+            link_num+=1
+
+        for i,j in rxns.items():   
+            # plot rxn Ea. for it to show up between species, should be here
+            rxn_eq = self.pes_rxn_dict[i].equation
+            rxn_Ea = self.pes_rxn_dict[i].barrier
+
+            # make a new energy level
+            self.diagram.add_level(rxn_Ea, rxn_eq, starting_pos + 1)
+            
+            self.pes_rxn_dict[i].links[1] = link_num
+            link_num+=1
+
+        for i,j in rxns.items():  
+            # generate a pes plot for each pes_reaction 
+            for k,l in self.pes_rxn_dict[i].products.items():
+                prod = k
+                H_p = l
+
+                # make a new energy level
+                self.diagram.add_level(H_p, prod,starting_pos + 2)
+
+            # add link id for line drawing
+            self.pes_rxn_dict[i].links[2] = link_num
+            link_num+=1
+
+        
+        for i,j in rxns.items():
+            # get connections between each reac - Ea and each Ea-product
+            self.diagram.add_link(self.pes_rxn_dict[i].links[0],self.pes_rxn_dict[i].links[1])
+            self.diagram.add_link(self.pes_rxn_dict[i].links[1],self.pes_rxn_dict[i].links[2])
+
+        # optional arguements 
+        if space: 
+            self.diagram.space = space
+        if offset:
+            self.diagram.offset = offset
+        if dimension:
+            self.diagram.dimension = dimension
+
+        self.diagram.plot(show_IDs=True, ylabel="Energy / $eV$", width=width, height=height)
