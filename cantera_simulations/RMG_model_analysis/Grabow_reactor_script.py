@@ -241,51 +241,50 @@ def save_flux_diagrams(*phases, suffix="", timepoint="", species_path=""):
             os.system(f"dot {dot_file} -Tpng -o{img_file} -Gdpi=200")
             print(f"Wrote graphviz output file to '{img_path}'.")
 
-############################################################################################
-# Edited part to get Graaf conditions
-# Julia Treese
-# get Graaf conditions into a list of lists to run
 
-            
-file_name_feed1 = "/home/treese.j/Graaf_data/Feed_1.csv"
-file_name_feed2 = "/home/treese.j/Graaf_data/Feed_2.csv"
-file_name_feed3 = "/home/treese.j/Graaf_data/Feed_3.csv"
-file_name_feed4 = "/home/treese.j/Graaf_data/Feed_4.csv"
-file_name_feed5 = "/home/treese.j/Graaf_data/Feed_5.csv"
-file_name_inlets = "/home/treese.j/Graaf_data/Feed_Inlets.csv"
+def load_graaf_data():
+    """
+    Edited part to get Graaf conditions
+    Julia Treese
+    get Graaf conditions into a list of lists to run
+    """
+    file_name_feed1 = "../Graaf_data/Feed_1.csv"
+    file_name_feed2 = "../Graaf_data/Feed_2.csv"
+    file_name_feed3 = "../Graaf_data/Feed_3.csv"
+    file_name_feed4 = "../Graaf_data/Feed_4.csv"
+    file_name_feed5 = "../Graaf_data/Feed_5.csv"
+    file_name_inlets = "../Graaf_data/Feed_Inlets.csv"
 
-df_inlet = pd.read_csv(file_name_inlets)
-df_1 = pd.read_csv(file_name_feed1)
-df_2 = pd.read_csv(file_name_feed2)
-df_3 = pd.read_csv(file_name_feed3)
-df_4 = pd.read_csv(file_name_feed4)
-df_5 = pd.read_csv(file_name_feed5)
+    df_inlet = pd.read_csv(file_name_inlets)
+    df_1 = pd.read_csv(file_name_feed1)
+    df_2 = pd.read_csv(file_name_feed2)
+    df_3 = pd.read_csv(file_name_feed3)
+    df_4 = pd.read_csv(file_name_feed4)
+    df_5 = pd.read_csv(file_name_feed5)
 
 
-# Needed: [T, P, V, YH2, YCO2] -- Create a list of lists
-# Should be columns 2 (T), 1 (P), 3 (V), 6 (YH2), 5 (YCO2)
-# Each list is the conditions of one experimental Graaf run
+    # Needed: [T, P, V, YH2, YCO2] -- Create a list of lists
+    # Should be columns 2 (T), 1 (P), 3 (V), 6 (YH2), 5 (YCO2)
+    # Each list is the conditions of one experimental Graaf run
 
-# List of dataframes with feed conditions
-df_list = [df_1, df_2, df_3, df_4, df_5]
+    # List of dataframes with feed conditions
+    df_list = [df_1, df_2, df_3, df_4, df_5]
 
-# Loop through dataframes and create a list of conditions based on Graaf runs
-# Loop through each row in the dataframes and add that row's conditions to the list of lists
+    # Loop through dataframes and create a list of conditions based on Graaf runs
+    # Loop through each row in the dataframes and add that row's conditions to the list of lists
 
-settings = []
+    settings = []
 
-for i in range(len(df_list)):
-    df = df_list[i]
-    for row in range(len(df)):
-        row_conditions = [df.iloc[row, df.columns.get_loc('T (K)')], 
-                          df.iloc[row, df.columns.get_loc('p (bar)')], 
-                          df.iloc[row,df.columns.get_loc('V (M^3/s)')], 
-                          df_inlet.iloc[i,3], 
-                          df_inlet.iloc[i,2]]
-        settings.append(row_conditions)
-
-###########################################################################################
-            
+    for i in range(len(df_list)):
+        df = df_list[i]
+        for row in range(len(df)):
+            row_conditions = [df.iloc[row, df.columns.get_loc('T (K)')], 
+                            df.iloc[row, df.columns.get_loc('p (bar)')], 
+                            df.iloc[row,df.columns.get_loc('V (M^3/s)')], 
+                            df_inlet.iloc[i,3], 
+                            df_inlet.iloc[i,2]]
+            settings.append(row_conditions)
+    return settings          
             
 def run_reactor(
     cti_file,
@@ -304,6 +303,7 @@ def run_reactor(
     sensrtol=1e-6,
     reactime=1e5,
     grabow=False,
+    graaf=False
 ):
 
 
@@ -335,11 +335,11 @@ def run_reactor(
     else:
         sensitivity_str = "off"
 
-    # this should probably be outside of function
-    # settings = list(itertools.product(t_array, p_array, v_array, h2_array, co2_array))
-#     settings=[[500, 15, 0.000423, 0.1, 0.2],
-#               [500, 15, 0.002233, 0.1, 0.2],
-#               []...]
+    if graaf:
+        settings = load_graaf_data()
+    else:
+        settings = list(itertools.product(t_array, p_array, v_array, h2_array, co2_array))
+
 
     # constants
     pi = math.pi
