@@ -8,9 +8,8 @@ class sensitivity_test:
     def __init__(
         self,
         yaml_file,
-        rtol=1.0e-10,
-        atol=1.0e-20,
-        energy="on",
+        rtol=1.0e-9,
+        atol=1.0e-18,
         sensatol=1e-6,
         sensrtol=1e-6,
         reactime=1e5,
@@ -23,23 +22,12 @@ class sensitivity_test:
         self.gas = ct.Solution(yaml_file)
         self.surf = ct.Interface(yaml_file,"surface1", [self.gas])
 
-        self.r = ct.IdealGasReactor(self.gas, energy=energy)
         # set initial temps, pressures, concentrations
         self.temp = 700              # kelvin
         self.pressure =  ct.one_atm  # Pascals
 
         # mole fractions:
         self.concentrations = {"CH4(2)": 0.148, "O2(3)": 0.296, "AR": 0.556}
-
-        # initialize T and P
-        self.gas.TPX = self.temp, self.pressure, self.concentrations
-        self.surf.TP = self.temp, self.pressure
-
-        # create gas inlet
-        self.inlet = ct.Reservoir(self.gas)
-
-        # create gas outlet
-        self.exhaust = ct.Reservoir(self.gas)
 
         # Reactor volume
         self.rradius = 8.25e-3
@@ -74,20 +62,90 @@ class sensitivity_test:
         # catalyst area in one reactor
         self.cat_area = self.cat_area_per_vol * self.rvol
 
-        # reactor initialization
-        self.r = ct.IdealGasReactor(self.gas, energy=energy)
+        # set relative and absolute tolerances on the simulation
+        self.rtol = rtol
+        self.atol = atol
+        self.sens_atol = sensatol
+        self.sens_rtol = sensrtol
 
-        # calculate the available catalyst area in a differential reactor
-        self.rsurf = ct.ReactorSurface(self.surf, self.r, A=self.cat_area)
-        self.r.volume = self.rvol
+    def set_simulation(self, species):
+        self.gas.TPX = 273.15, self.pressure, self.concentrations
+        mass_flow_rate = self.flow_rate * self.gas.density_mass
+        self.gas.TPX = self.temp, self.pressure, self.concentrations
+        self.surf.TP = self.temp, self.pressure
+
         self.surf.coverages = "X(1):1.0"
 
-        # initialize reactor network
-        self.sim = ct.ReactorNet([self.r])
+        idx = self.surf.species_index(species)
 
-        # set relative and absolute tolerances on the simulation
-        self.sim.rtol = rtol
-        self.sim.atol = atol
+        # create a reactor
+        r = ct.IdealGasReactor(self.gas)
+
+        # set the volume of the reactor
+        r.volume = self.rvol
+
+        # create a reservoir to represent the reactor immediately upstream. Note
+        # that the gas object is set already to the state of the upstream reactor
+        upstream = ct.Reservoir(self.gas, name='upstream')
+
+        # create a reservoir for the reactor to exhaust into. The composition of
+        # this reservoir is irrelevant.
+        downstream = ct.Reservoir(self.gas, name='downstream')
+
+        rsurf = ct.ReactorSurface(self.surf, r, A=self.cat_area)
+
+        # The mass flow rate into the reactor will be fixed by using a
+        # MassFlowController object.
+        m = ct.MassFlowController(upstream, r, mdot=mass_flow_rate)
+
+        # We need an outlet to the downstream reservoir. This will determine the
+        # pressure in the reactor. The value of K will only affect the transient
+        # pressure difference.
+        v = ct.PressureController(r, downstream, master=m, K=1e-5)
+
+        sim = ct.ReactorNet([r])
+        sim.max_err_test_fails = 12
+
+        rsurf.add_sensitivity_species_enthalpy(idx)
+        sim.rtol = self.rtol
+        sim.atol = self.atol
+        sim.rtol_sensitivity = self.sens_rtol
+        sim.atol_sensitivity = self.sens_atol
+
+        gas_out = []
+        surf_out = []
+        dist_array = []
+        T_array = []
+        sens_array = []
+
+        for n in range(self.n_reactors):
+            self.gas.TDY = r.thermo.TDY
+            upstream.syncState()
+            if n == self.on_catalyst:
+                self.surf.set_multiplier(1.0)
+            if n == self.off_catalyst:
+                self.surf.set_multiplier(0.0)
+            sim.reinitialize()
+            sim.advance_to_steady_state()
+            dist = n * self.reactor_len * 1e3 #distance in mm
+            dist_array.append(dist)
+            T_array.append(self.surf.T)
+            sens_array.append(sim.sensitivities()[idx])
+            kmole_flow_rate = mass_flow_rate / self.gas.mean_molecular_weight  # kmol/s
+            gas_out.append(1000 * 60 * kmole_flow_rate * self.gas.X.copy())  # molar flow rate in moles/minute
+            surf_out.append(self.surf.X.copy())
+
+            if n >= 1001:
+                if np.max(abs(np.subtract(gas_out[-2], gas_out[-1]))) < 1e-15:
+                    break
+
+        gas_out = np.array(gas_out)
+        surf_out = np.array(surf_out)
+        gas_names = np.array(self.gas.species_names)
+        surf_names = np.array(self.surf.species_names)
+        data_out = gas_out, surf_out, gas_names, surf_names, dist_array, T_array, sens_array
+        print(len(dist_array))
+        return data_out
 
     def brute_unperturbed(self, species):
         S = self.surf.species(species)
@@ -199,6 +257,7 @@ def main(argv):
 if __name__ == "__main__":
     yaml_file = main(sys.argv[1:])
     sens = sensitivity_test(yaml_file)
-    sens_value_bf = sens.brute_perturbed("COX(23)") - sens.brute_unperturbed("COX(23)") / 0.01
-    sens_value = sens.normal_thermo("COX(23)")
-    print(sens_value, sens_value_bf)
+    sens_value = sens.set_simulation("HX(21)")
+    print(sens_value)
+    # sens_value_bf = sens.brute_perturbed("COX(23)") - sens.brute_unperturbed("COX(23)") / 0.01
+    # print(sens_value, sens_value_bf)
