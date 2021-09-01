@@ -538,7 +538,7 @@ class sbr:
                 surftherm_sens_str = [
                     j + " thermo sensitivity to " + i for i in self.surf.species_names
                     ]
-                sens_list = gasrxn_sens_str + surfrxn_sens_str  + gastherm_sens_str
+                sens_list = gasrxn_sens_str + surfrxn_sens_str  + gastherm_sens_str + surftherm_sens_str
 
 
             writer.writerow(
@@ -656,6 +656,7 @@ class sbr:
                         gas_sensitivities
                         + surf_sensitivities
                         + gas_therm_sensitivities
+                        + surf_therm_sensitivities
                     )
 
                 writer.writerow(
@@ -821,7 +822,7 @@ class sbr:
                 surftherm_sens_str = [
                     j + " thermo sensitivity to " + i for i in self.surf.species_names
                     ]
-                sens_list = gasrxn_sens_str + surfrxn_sens_str  + gastherm_sens_str
+                sens_list = gasrxn_sens_str + surfrxn_sens_str  + gastherm_sens_str + surftherm_sens_str
 
 
             writer.writerow(
@@ -904,6 +905,7 @@ class sbr:
                     gas_sensitivities
                     + surf_sensitivities
                     + gas_therm_sensitivities
+                    + surf_therm_sensitivities
                 )
 
             writer.writerow(
