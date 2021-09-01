@@ -21,7 +21,7 @@ from rmgpy.data.base import Database
 class sbr:
 
 ###############################################
-# Stirred reactor batch script
+# Stirred batch reactor script
 # Chris Blais
 # Northeastern University
 ###############################################
@@ -253,6 +253,9 @@ class sbr:
         # set relative and absolute tolerances on the simulation
         self.sim.rtol = rtol
         self.sim.atol = atol
+        
+        self.sensrtol = sensrtol
+        self.sensatol = sensatol
 
         # set reactime for transient reactor
         self.reactime = reactime
@@ -410,7 +413,8 @@ class sbr:
         """
         Run single reactor to a set time
         """
-        
+
+        # self.git_file_string = self.git_file_string.replace("&", "\&")
         # set paths for saving species pictures, fluxes, and csv files
         self.species_path = (
             os.path.dirname(os.path.abspath(__file__))
@@ -504,8 +508,8 @@ class sbr:
         # Sensitivity atol, rtol, and strings for gas and surface reactions if selected
         # slows down script by a lot
         if self.sensitivity:
-            self.sim.rtol_sensitivity = sensrtol
-            self.sim.atol_sensitivity = sensatol
+            self.sim.rtol_sensitivity = self.sensrtol
+            self.sim.atol_sensitivity = self.sensatol
             self.sens_species = ["CH3OH(8)"]
 
             # turn on sensitive reactions/species
@@ -518,7 +522,7 @@ class sbr:
             for i in range(self.gas.n_species):
                 self.r.add_sensitivity_species_enthalpy(i)
 
-            for i in range(surf.n_species):
+            for i in range(self.surf.n_species):
                 self.rsurf.add_sensitivity_species_enthalpy(i)
 
             for j in self.sens_species:
@@ -626,7 +630,7 @@ class sbr:
             # species i (e.g. methanol) in reaction j
             if self.sensitivity:
                 
-                for i in sens_species:
+                for i in self.sens_species:
                     g_nrxn = self.gas.n_reactions
                     s_nrxn = self.surf.n_reactions
                     g_nspec = self.gas.n_species
@@ -787,8 +791,8 @@ class sbr:
         # Sensitivity atol, rtol, and strings for gas and surface reactions if selected
         # slows down script by a lot
         if self.sensitivity:
-            self.sim.rtol_sensitivity = sensrtol
-            self.sim.atol_sensitivity = sensatol
+            self.sim.rtol_sensitivity = self.sensrtol
+            self.sim.atol_sensitivity = self.sensatol
             self.sens_species = ["CH3OH(8)"]
 
             # turn on sensitive reactions/species
@@ -801,7 +805,7 @@ class sbr:
             for i in range(self.gas.n_species):
                 self.r.add_sensitivity_species_enthalpy(i)
 
-            for i in range(surf.n_species):
+            for i in range(self.surf.n_species):
                 self.rsurf.add_sensitivity_species_enthalpy(i)
 
             for j in self.sens_species:
@@ -874,7 +878,7 @@ class sbr:
         # if sensitivity, get sensitivity for sensitive 
         # species i (e.g. methanol) in reaction j
         if self.sensitivity:   
-            for i in sens_species:
+            for i in self.sens_species:
                 g_nrxn = self.gas.n_reactions
                 s_nrxn = self.surf.n_reactions
                 g_nspec = self.gas.n_species
