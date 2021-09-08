@@ -38,11 +38,12 @@ class sbr:
         atol=1.0e-22,
         reactor_type=0,
         energy="off",
-        sensitivity=False,
+        sensitivity=0,
         sensatol=1e-6,
         sensrtol=1e-6,
         reactime=1e5,
         grabow=False,
+        sens_species="CH3OH(8)",
         ):
         """
         initialize object 
@@ -57,7 +58,11 @@ class sbr:
         reactor_type = 0 - Reactor, 1 - IdealGasReactor, 
                        2 - ConstPressureReactor, 3 - IdealGasConstPressureReactor
         energy = str, "on" if non-isothermal, "off" if isothermal
-        sensitivity = perform sensitivity analysis
+        sensitivity = int (0-3) perform sensitivity analysis on: 
+                        0: nothing
+                        1: Kinetics
+                        2: Thermo
+                        3: Kinetics + Thermo
         sensatol = sensitivity atol
         sensrtol = sensitivity rtol
         reactime = time to run the reactor
@@ -108,11 +113,16 @@ class sbr:
 
         # set sensitivity string for file path name
         self.sensitivity = sensitivity
-        if self.sensitivity:
-            self.sensitivity_str = "on"
+        if self.sensitivity == 1: 
+            self.sensitivity_str = "kinetics_sensitivity"
+        elif self.sensitivity == 2: 
+            self.sensitivity_str = "thermo_sensitivity"
+        elif self.sensitivity == 3: 
+            self.sensitivity_str = "all_sensitivity"
         else: 
-            self.sensitivity_str = "off"
+            self.sensitivity_str = "no_sensitivity"
 
+        self.sens_species = sens_species
         # constants
         pi = math.pi
 
@@ -422,16 +432,16 @@ class sbr:
         )
         self.results_path = (
             os.path.dirname(os.path.abspath(__file__))
-        + f"/{self.git_file_string}/transient/{self.reactor_type_str}/energy_{self.energy}/sensitivity_{self.sensitivity_str}/{self.temp_str}/results"
+        + f"/{self.git_file_string}/transient/{self.reactor_type_str}/energy_{self.energy}/{self.sensitivity_str}/{self.temp_str}/results"
         )
         results_path_csp = (
             os.path.dirname(os.path.abspath(__file__))
-            + f"/{self.git_file_string}/transient/{self.reactor_type_str}/energy_{self.energy}/sensitivity_{self.sensitivity_str}/{self.temp_str}/csp"
+            + f"/{self.git_file_string}/transient/{self.reactor_type_str}/energy_{self.energy}/{self.sensitivity_str}/{self.temp_str}/csp"
         )
 
         self.flux_path = (
             os.path.dirname(os.path.abspath(__file__))
-            + f"/{self.git_file_string}/transient/{self.reactor_type_str}/energy_{self.energy}/sensitivity_{self.sensitivity_str}/{self.temp_str}/flux_diagrams/{self.x_h2_str}/{self.x_CO_CO2_str}"
+            + f"/{self.git_file_string}/transient/{self.reactor_type_str}/energy_{self.energy}/{self.sensitivity_str}/{self.temp_str}/flux_diagrams/{self.x_h2_str}/{self.x_CO_CO2_str}"
         )
         
         # create folders if they don't already exist
@@ -507,10 +517,75 @@ class sbr:
 
         # Sensitivity atol, rtol, and strings for gas and surface reactions if selected
         # slows down script by a lot
-        if self.sensitivity:
+        if self.sensitivity ==1: # kinetic sensitivity
             self.sim.rtol_sensitivity = self.sensrtol
             self.sim.atol_sensitivity = self.sensatol
-            self.sens_species = ["CH3OH(8)"]
+
+            # turn on sensitive reactions
+            for i in range(self.gas.n_reactions):
+                self.r.add_sensitivity_reaction(i)
+
+            for i in range(self.surf.n_reactions):
+                self.rsurf.add_sensitivity_reaction(i)
+
+            for j in self.sens_species:
+                gasrxn_sens_str = [
+                    j + " sensitivity to " + i for i in self.gas.reaction_equations()
+                ]
+                surfrxn_sens_str = [
+                    j + " sensitivity to " + i for i in self.surf.reaction_equations()
+                ]
+                sens_list = gasrxn_sens_str + surfrxn_sens_str  
+
+
+            writer.writerow(
+                preconditions
+                + self.gas.species_names
+                + self.surf.species_names
+                + gas_ROP_str
+                + gas_surf_ROP_str
+                + surf_ROP_str
+                + gasrxn_ROP_str
+                + surfrxn_ROP_str
+                + sens_list
+            )
+
+        if self.sensitivity ==2: # thermo sensitivity
+            self.sim.rtol_sensitivity = self.sensrtol
+            self.sim.atol_sensitivity = self.sensatol
+
+            # turn on sensitive species
+            for i in range(self.gas.n_species):
+                self.r.add_sensitivity_species_enthalpy(i)
+
+            for i in range(self.surf.n_species):
+                self.rsurf.add_sensitivity_species_enthalpy(i)
+
+            for j in self.sens_species:
+                gastherm_sens_str = [
+                    j + " thermo sensitivity to " + i for i in self.gas.species_names
+                    ]
+                surftherm_sens_str = [
+                    j + " thermo sensitivity to " + i for i in self.surf.species_names
+                    ]
+                sens_list = gastherm_sens_str + surftherm_sens_str
+
+
+            writer.writerow(
+                preconditions
+                + self.gas.species_names
+                + self.surf.species_names
+                + gas_ROP_str
+                + gas_surf_ROP_str
+                + surf_ROP_str
+                + gasrxn_ROP_str
+                + surfrxn_ROP_str
+                + sens_list
+            )
+
+        if self.sensitivity ==3: # both sensitivity
+            self.sim.rtol_sensitivity = self.sensrtol
+            self.sim.atol_sensitivity = self.sensatol
 
             # turn on sensitive reactions/species
             for i in range(self.gas.n_reactions):
@@ -553,7 +628,7 @@ class sbr:
                 + sens_list
             )
 
-        else:
+        else: # no sensitivity
             writer.writerow(
                 preconditions
                 + self.gas.species_names
@@ -628,8 +703,68 @@ class sbr:
             ]
             # if sensitivity, get sensitivity for sensitive 
             # species i (e.g. methanol) in reaction j
-            if self.sensitivity:
-                
+
+            if self.sensitivity == 1: # kinetic sensitivity
+                for i in self.sens_species:
+                    g_nrxn = self.gas.n_reactions
+                    s_nrxn = self.surf.n_reactions
+
+                    gas_sensitivities = [
+                        self.sim.sensitivity(i, j) for j in range(g_nrxn)
+                        ]
+                    surf_sensitivities = [
+                        self.sim.sensitivity(i, j) for j in range(g_nrxn, g_nrxn + s_nrxn)
+                    ]
+
+                    sensitivities_all = (
+                        gas_sensitivities
+                        + surf_sensitivities
+                    )
+
+                writer.writerow(
+                    precondition_values
+                    + list(self.gas.X)
+                    + list(self.surf.X)
+                    + list(self.gas.net_production_rates)
+                    + list(self.surf.net_production_rates)
+                    + gas_net_rates_of_progress
+                    + list(self.surf.net_rates_of_progress)
+                    + sensitivities_all
+                )
+
+
+            elif self.sensitivity == 2: # thermo_sensitivity
+                for i in self.sens_species:
+                    g_nspec = self.gas.n_species
+                    s_nspec = self.surf.n_species
+
+                    gas_therm_sensitivities = [
+                        self.sim.sensitivity(i,j)
+                        for j in range(g_nrxn+s_nrxn,g_nrxn+s_nrxn+g_nspec)
+                        ]
+                    surf_therm_sensitivities = [
+                        self.sim.sensitivity(i,j)
+                        for j in range(g_nrxn+s_nrxn+g_nspec,g_nrxn+s_nrxn+g_nspec+s_nspec)
+                        ]
+
+                    sensitivities_all = (
+                        gas_therm_sensitivities
+                        + surf_therm_sensitivities
+                    )
+
+                writer.writerow(
+                    precondition_values
+                    + list(self.gas.X)
+                    + list(self.surf.X)
+                    + list(self.gas.net_production_rates)
+                    + list(self.surf.net_production_rates)
+                    + gas_net_rates_of_progress
+                    + list(self.surf.net_rates_of_progress)
+                    + sensitivities_all
+                )               
+
+
+            elif self.sensitivity == 3: # all_sensitivity
                 for i in self.sens_species:
                     g_nrxn = self.gas.n_reactions
                     s_nrxn = self.surf.n_reactions
@@ -670,7 +805,7 @@ class sbr:
                     + sensitivities_all
                 )
 
-            else:
+            else: # no sensitivity
                 writer.writerow(
                     precondition_values
                     + list(self.gas.X)
@@ -680,7 +815,7 @@ class sbr:
                     + gas_net_rates_of_progress
                     + list(self.surf.net_rates_of_progress)
                 )
-
+                
             writer_csp.writerow(
                 [
                     iter_ct,
@@ -726,11 +861,11 @@ class sbr:
         )
         self.results_path = (
             os.path.dirname(os.path.abspath(__file__))
-        + f"/{self.git_file_string}/steady_state/{self.reactor_type_str}/energy_{self.energy}/sensitivity_{self.sensitivity_str}/{self.temp_str}/results"
+        + f"/{self.git_file_string}/steady_state/{self.reactor_type_str}/energy_{self.energy}/{self.sensitivity_str}/{self.temp_str}/results"
         )
         self.flux_path = (
             os.path.dirname(os.path.abspath(__file__))
-            + f"/{self.git_file_string}/steady_state/{self.reactor_type_str}/energy_{self.energy}/sensitivity_{self.sensitivity_str}/{self.temp_str}/flux_diagrams/{self.x_h2_str}/{self.x_CO_CO2_str}"
+            + f"/{self.git_file_string}/steady_state/{self.reactor_type_str}/energy_{self.energy}/{self.sensitivity_str}/{self.temp_str}/flux_diagrams/{self.x_h2_str}/{self.x_CO_CO2_str}"
         )
 
         # create folders if they don't already exist
@@ -791,10 +926,75 @@ class sbr:
 
         # Sensitivity atol, rtol, and strings for gas and surface reactions if selected
         # slows down script by a lot
-        if self.sensitivity:
+        if self.sensitivity ==1: # kinetic sensitivity
             self.sim.rtol_sensitivity = self.sensrtol
             self.sim.atol_sensitivity = self.sensatol
-            self.sens_species = ["CH3OH(8)"]
+
+            # turn on sensitive reactions
+            for i in range(self.gas.n_reactions):
+                self.r.add_sensitivity_reaction(i)
+
+            for i in range(self.surf.n_reactions):
+                self.rsurf.add_sensitivity_reaction(i)
+
+            for j in self.sens_species:
+                gasrxn_sens_str = [
+                    j + " sensitivity to " + i for i in self.gas.reaction_equations()
+                ]
+                surfrxn_sens_str = [
+                    j + " sensitivity to " + i for i in self.surf.reaction_equations()
+                ]
+                sens_list = gasrxn_sens_str + surfrxn_sens_str  
+
+
+            writer.writerow(
+                preconditions
+                + self.gas.species_names
+                + self.surf.species_names
+                + gas_ROP_str
+                + gas_surf_ROP_str
+                + surf_ROP_str
+                + gasrxn_ROP_str
+                + surfrxn_ROP_str
+                + sens_list
+            )
+
+        elif self.sensitivity ==2: # thermo sensitivity
+            self.sim.rtol_sensitivity = self.sensrtol
+            self.sim.atol_sensitivity = self.sensatol
+
+            # turn on sensitive species
+            for i in range(self.gas.n_species):
+                self.r.add_sensitivity_species_enthalpy(i)
+
+            for i in range(self.surf.n_species):
+                self.rsurf.add_sensitivity_species_enthalpy(i)
+
+            for j in self.sens_species:
+                gastherm_sens_str = [
+                    j + " thermo sensitivity to " + i for i in self.gas.species_names
+                    ]
+                surftherm_sens_str = [
+                    j + " thermo sensitivity to " + i for i in self.surf.species_names
+                    ]
+                sens_list = gastherm_sens_str + surftherm_sens_str
+
+
+            writer.writerow(
+                preconditions
+                + self.gas.species_names
+                + self.surf.species_names
+                + gas_ROP_str
+                + gas_surf_ROP_str
+                + surf_ROP_str
+                + gasrxn_ROP_str
+                + surfrxn_ROP_str
+                + sens_list
+            )
+
+        elif self.sensitivity ==3: # both sensitivity
+            self.sim.rtol_sensitivity = self.sensrtol
+            self.sim.atol_sensitivity = self.sensatol
 
             # turn on sensitive reactions/species
             for i in range(self.gas.n_reactions):
@@ -837,7 +1037,7 @@ class sbr:
                 + sens_list
             )
 
-        else:
+        else: # no sensitivity
             writer.writerow(
                 preconditions
                 + self.gas.species_names
@@ -878,7 +1078,67 @@ class sbr:
         ]
         # if sensitivity, get sensitivity for sensitive 
         # species i (e.g. methanol) in reaction j
-        if self.sensitivity:   
+        if self.sensitivity == 1: # kinetic sensitivity
+            for i in self.sens_species:
+                g_nrxn = self.gas.n_reactions
+                s_nrxn = self.surf.n_reactions
+
+                gas_sensitivities = [
+                    self.sim.sensitivity(i, j) for j in range(g_nrxn)
+                    ]
+                surf_sensitivities = [
+                    self.sim.sensitivity(i, j) for j in range(g_nrxn, g_nrxn + s_nrxn)
+                ]
+
+                sensitivities_all = (
+                    gas_sensitivities
+                    + surf_sensitivities
+                )
+
+            writer.writerow(
+                precondition_values
+                + list(self.gas.X)
+                + list(self.surf.X)
+                + list(self.gas.net_production_rates)
+                + list(self.surf.net_production_rates)
+                + gas_net_rates_of_progress
+                + list(self.surf.net_rates_of_progress)
+                + sensitivities_all
+            )
+
+
+        elif self.sensitivity == 2: # thermo_sensitivity
+            for i in self.sens_species:
+                g_nspec = self.gas.n_species
+                s_nspec = self.surf.n_species
+
+                gas_therm_sensitivities = [
+                    self.sim.sensitivity(i,j)
+                    for j in range(g_nspec)
+                    ]
+                surf_therm_sensitivities = [
+                    self.sim.sensitivity(i,j)
+                    for j in range(g_nspec,g_nspec+s_nspec)
+                    ]
+
+                sensitivities_all = (
+                    gas_therm_sensitivities
+                    + surf_therm_sensitivities
+                )
+
+            writer.writerow(
+                precondition_values
+                + list(self.gas.X)
+                + list(self.surf.X)
+                + list(self.gas.net_production_rates)
+                + list(self.surf.net_production_rates)
+                + gas_net_rates_of_progress
+                + list(self.surf.net_rates_of_progress)
+                + sensitivities_all
+            )               
+
+
+        elif self.sensitivity == 3: # all_sensitivity
             for i in self.sens_species:
                 g_nrxn = self.gas.n_reactions
                 s_nrxn = self.surf.n_reactions
@@ -919,7 +1179,7 @@ class sbr:
                 + sensitivities_all
             )
 
-        else:
+        else: # no sensitivity
             writer.writerow(
                 precondition_values
                 + list(self.gas.X)
