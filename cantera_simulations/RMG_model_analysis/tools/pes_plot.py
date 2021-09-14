@@ -184,6 +184,11 @@ class pes_plot():
         self.gas.TP = self.temp, self.pressure
         self.surf.TP = self.temp, self.pressure
 
+        # create reaction diagram object
+        self.diagram = ED()
+
+        # initialize the reaction object dictionary
+        self.pes_rxn_dict = {}
 
     def get_h_ev(self, species, temp):
         """
@@ -220,20 +225,41 @@ class pes_plot():
         for i,j in enumerate(self.gas.reactions()):
             if all(x in j.reactants.keys() for x in species_names):
                 rxns[j.equation] = j
-                Ea = species_ea + (j.rate.activation_energy/1000**2)/96
+                # Ea = species_ea + (j.rate.activation_energy/1000**2)/96
+                Ea = species_ea + self.get_ea_ev(j)
                 print(j.equation, Ea)
+                self.pes_rxn_dict[i] = pes_reaction_combine(j, self.gas, self.surf)
+
+            # # if we want to show the reverse reaction, specify that 
+            # # in call to pes_reaction_combine
+            # if all(x in j.products.keys() for x in species_names):
+            #     rxns[j.equation] = j
+            #     # Ea = species_ea + (j.rate.activation_energy/1000**2)/96
+            #     Ea = species_ea + self.get_ea_ev(j)
+            #     print(j.equation, Ea)
+            #     self.pes_rxn_dict[i] = pes_reaction_combine(j, self.gas, self.surf, reverse=1)
                 
         for i,j in enumerate(self.surf.reactions()):
             if all(x in j.reactants.keys() for x in species_names):
                 rxns[j.equation] = j
-                Ea = species_ea + (j.rate.activation_energy/1000**2)/96
+                # Ea = species_ea + (j.rate.activation_energy/1000**2)/96
+                Ea = species_ea + self.get_ea_ev(j)
                 print(j.equation, Ea)
+
+            # # if we want to show the reverse reaction, specify that 
+            # # in call to pes_reaction_combine
+            # if all(x in j.products.keys() for x in species_names):
+            #     rxns[j.equation] = j
+            #     # Ea = species_ea + (j.rate.activation_energy/1000**2)/96
+            #     Ea = species_ea + self.get_ea_ev(j)
+            #     print(j.equation, Ea)
+            #     self.pes_rxn_dict[i] = pes_reaction_combine(j, self.gas, self.surf, reverse=1)
         
         # if no reactions are found, throw an error
         if len(rxns)==0:
             raise Exception(f"no reactions found with reactants {species}")
                 
-        return rxns
+        return rxns, reversible
 
     def plot_pes_diagram(
         self, 
@@ -260,12 +286,6 @@ class pes_plot():
         combined - (bool) if true combine all reactants to a single energy level. do the same for products.
         """
 
-        # create reaction diagram object
-        self.diagram = ED()
-
-        # initialize the reaction object dictionary
-        self.pes_rxn_dict = {}
-
         # get a list of all reactions containing the two species identified
         species_obj = []
         for i in species:
@@ -276,7 +296,7 @@ class pes_plot():
             else:
                 print(f'species {i} not found!')
 
-        rxns = self.find_reactions(species_obj, self.temp)
+        rxns, reversible = self.find_reactions(species_obj, self.temp)
 
         # for each reaction, make a "pes_rxn" object. add to a dict.  
         # contains information for enthalpy and barriers
@@ -292,13 +312,14 @@ class pes_plot():
 
         link_num = 0
         for i,j in rxns.items():
-            # generate a pes plot for each pes_reaction
+            # generate a pes plot for each pes_reaction reactant
             for k,l in self.pes_rxn_dict[i].reactants.items():
                 reac = k
                 H_r = l
 
                 # make a new energy level
                 self.diagram.add_level(H_r, k,0)
+                self.pes_rxn_dict[i].positions[0] = 0
                     
             self.pes_rxn_dict[i].links[0] = link_num
             link_num+=1
@@ -310,18 +331,22 @@ class pes_plot():
 
             # make a new energy level
             self.diagram.add_level(rxn_Ea, rxn_eq, 1)
+            self.pes_rxn_dict[i].positions[1] = 1
             
             self.pes_rxn_dict[i].links[1] = link_num
             link_num+=1
 
         for i,j in rxns.items():
-            # generate a pes plot for each pes_reaction 
+            # generate a pes plot for each pes_reaction product
+
             for k,l in self.pes_rxn_dict[i].products.items():
                 prod = k
                 H_p = l
 
                 # make a new energy level
                 self.diagram.add_level(H_p, prod,2)
+                self.pes_rxn_dict[i].positions[2] = 2
+                print(self.diagram.data)
 
             # add link id for line drawing
             self.pes_rxn_dict[i].links[2] = link_num
@@ -329,7 +354,7 @@ class pes_plot():
 
         
         for i in self.pes_rxn_dict.values():
-            # get connections between each reac - Ea and each Ea-product
+            # get connections between each reac - Ea and each Ea - product
             self.diagram.add_link(i.links[0],i.links[1])
             self.diagram.add_link(i.links[1],i.links[2])
 
@@ -358,7 +383,7 @@ class pes_plot():
         species is the product species selected for the next step
         """
 
-        # get a list of all reactions containing the two species identified
+        # get a list of all reactions containing the species identified
         species_obj = []
         for i in species:
             if i in self.gas.species_names:
@@ -370,18 +395,15 @@ class pes_plot():
 
         # ED.position can be assigned to an integer (1,2,3,4, etc) 
         # so we do not need to use "l"
-        # get starting position
+        # get starting position (whatever the last energy level position was)
         starting_pos = max(self.diagram.positions)
 
         # get number of starting species for drawing links
         species_str = ""
         for i in species:
             species_str += f"{i} "
-        
-        species_str = species_str.strip()
-        for i,j in enumerate(self.diagram.data):
-            if species_str in j:
-                link_num = i + 1
+
+        link_num = len(self.diagram.data)
 
         # for each reaction, make a "pes_rxn" object. add to a dict.  
         # contains information for enthalpy and barriers
@@ -398,6 +420,7 @@ class pes_plot():
 
                 # make a new energy level
                 self.diagram.add_level(H_r, k, starting_pos)
+                self.pes_rxn_dict[i].positions[0] = starting_pos
                     
             self.pes_rxn_dict[i].links[0] = link_num
             link_num+=1
@@ -409,6 +432,7 @@ class pes_plot():
 
             # make a new energy level
             self.diagram.add_level(rxn_Ea, rxn_eq, starting_pos + 1)
+            self.pes_rxn_dict[i].positions[1] = starting_pos + 1
             
             self.pes_rxn_dict[i].links[1] = link_num
             link_num+=1
@@ -421,6 +445,7 @@ class pes_plot():
 
                 # make a new energy level
                 self.diagram.add_level(H_p, prod,starting_pos + 2)
+                self.pes_rxn_dict[i].positions[2] = starting_pos + 2
 
             # add link id for line drawing
             self.pes_rxn_dict[i].links[2] = link_num
@@ -439,5 +464,111 @@ class pes_plot():
             self.diagram.offset = offset
         if dimension:
             self.diagram.dimension = dimension
+        
+        self.diagram.plot(show_IDs=True, ylabel="Energy / $eV$", width=width, height=height)
+
+
+
+    def _redraw(
+        self,
+        width=20, 
+        height=40,
+        offset=None,
+        dimension=None,
+        space=None,
+        ):
+
+        """ redraw after a trim"""
+        
+        # create new reaction diagram object 
+        # (is there a more efficient way to erase the old one?)
+        self.diagram = ED()
+
+        link_num = 0
+        for i,j in self.pes_rxn_dict.items():
+
+            # generate a pes plot for each pes_reaction reactant
+            for k,l in j.reactants.items():
+                reac = k
+                H_r = l
+
+                # make a new energy level
+                self.diagram.add_level(H_r, k, j.positions[0])
+                
+            rxn_eq = j.equation
+            rxn_Ea = j.barrier
+
+            # make a new energy level
+            self.diagram.add_level(rxn_Ea, rxn_eq, j.positions[1])
+
+            # generate a pes plot for each pes_reaction product
+            for k,l in j.products.items():
+                prod = k
+                H_p = l
+
+                # make a new energy level
+                self.diagram.add_level(H_p, prod, j.positions[2])
+
+        self.diagram.create_data()
+
+        # go through reaction dictionary and match reactant and product entries
+        # match only adjacent ones
+        for i,j in self.pes_rxn_dict.items():
+            for m,n in enumerate(self.diagram.data):
+
+                # there has to be a better way to do this ".keys())[0]"" nonsense
+                if str(list(j.reactants.keys())[0]) == n[2] and j.positions[0] == n[1]:
+                    j.links[0] = m
+                    position = n[1]
+                
+                if j.equation == n[2] and j.positions[1] == n[1]:
+                    j.links[1] = m
+
+                if str(list(j.products.keys())[0]) == n[2] and j.positions[2] == n[1]:
+                    j.links[2] = m
+
+
+        # need to figure out how to add links
+        for i in self.pes_rxn_dict.values():
+            # get connections between each reac - Ea and each Ea - product
+            self.diagram.add_link(i.links[0],i.links[1])
+            self.diagram.add_link(i.links[1],i.links[2])
+
+        # optional arguements 
+        if space: 
+            self.diagram.space = space
+        if offset:
+            self.diagram.offset = offset
+        if dimension:
+            self.diagram.dimension = dimension
 
         self.diagram.plot(show_IDs=True, ylabel="Energy / $eV$", width=width, height=height)
+
+    def trim(
+        self, 
+        reac, 
+        width=20, 
+        height=40,
+        offset=None,
+        dimension=None,
+        space=None,
+        ):
+        """
+        trims the specified reactions and their species from plot. 
+
+        updates the pes_rxn_object to remove reactions we do not want. 
+        runs through diagram.data and pes_rxn_object to update all of the links
+        
+        reac is the reaction to be trimmed (will remove reactants + products)
+        """
+        
+        for key in list(self.pes_rxn_dict.keys()):
+            if reac == key: 
+                del self.pes_rxn_dict[key]
+        
+        self._redraw()
+
+
+            
+
+        
