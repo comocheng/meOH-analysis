@@ -27,6 +27,7 @@ class pes_reaction_combine():
     reaction - a ct reaction object
     phase_gas - gas phase in mechanism (for looking up species)
     phase_surf - solid phase in mechanism (for looking up species)
+    reverse - bool, True if we swap reactants and products, and change Ea to Ea from products
 
     properties:
     reactants - dict, reactant string as key (e.g. "CO2+H2O"), combined Hf as value
@@ -43,6 +44,7 @@ class pes_reaction_combine():
         reaction,
         phase_gas,
         phase_surf,
+        reverse=False,
         ):
 
         self.equation = reaction.equation
@@ -52,11 +54,28 @@ class pes_reaction_combine():
         self.positions = [-1, -1, -1]
 
 
+        if reverse:
+            reactants_obj = reaction.products
+            products_obj = reaction.reactants
+
+            # flip reaction equation, e.g. A <=> B is now B <=> A
+            str_orig = reaction.equation
+            split_list = str_orig.split("<=>")
+            str1 = split_list[1] + " <=> " + split_list[0]
+            str1 = str1.strip() 
+            self.equation = str1
+            print("flipped equation: ", str_orig, self.equation)
+
+        else:
+            reactants_obj = reaction.reactants
+            products_obj = reaction.products
+            self.equation = reaction.equation
+
         # lookup each reactant, put in dictionary as 
         # {species_name : enthalpy at phase temp (in Ev) * stoich coeff}
         total_reac_enth = 0
         reac_str = ""
-        for i in reaction.reactants: 
+        for i in reactants_obj: 
             if i in phase_gas.species_names:
                 phase = phase_gas
             elif i in phase_surf.species_names:
@@ -65,7 +84,7 @@ class pes_reaction_combine():
                 logging.error(f"species {i} cannot be found")
 
             reac_str += f"{i} "
-            total_reac_enth += reaction.reactants[i] * (phase.species(i).thermo.h(phase.T)/1000**2)/96
+            total_reac_enth += reactants_obj[i] * (phase.species(i).thermo.h(phase.T)/1000**2)/96
 
         reac_str = reac_str.strip()
         self.reactants[reac_str] = total_reac_enth 
@@ -73,7 +92,7 @@ class pes_reaction_combine():
 
         total_prod_enth = 0
         prod_str = ""
-        for i in reaction.products: 
+        for i in products_obj: 
             if i in phase_gas.species_names:
                 phase = phase_gas
             elif i in phase_surf.species_names:
@@ -82,7 +101,7 @@ class pes_reaction_combine():
                 logging.error(f"species {i} cannot be found")
 
             prod_str += f"{i} "
-            total_prod_enth += reaction.products[i] * (phase.species(i).thermo.h(phase.T)/1000**2)/96
+            total_prod_enth += products_obj[i] * (phase.species(i).thermo.h(phase.T)/1000**2)/96
         
         prod_str = prod_str.strip()
         self.products[prod_str] = total_prod_enth 
@@ -90,7 +109,12 @@ class pes_reaction_combine():
 
         # reaction activation energy. need to add to 
         # reactant enthalpy to get barrier
-        self.barrier = (reaction.rate.activation_energy/1000**2)/96 + total_reac_enth
+        # if reversed, need to get barrier from the products
+        if reverse: 
+            self.barrier = (reaction.rate.activation_energy/1000**2)/96 + total_prod_enth
+        else: 
+            self.barrier = (reaction.rate.activation_energy/1000**2)/96 + total_reac_enth
+
         self.barrier = round(self.barrier, 3)
 
 class pes_reaction():
@@ -101,6 +125,7 @@ class pes_reaction():
     reaction - a ct reaction object
     phase_gas - gas phase in mechanism (for looking up species)
     phase_surf - solid phase in mechanism (for looking up species)
+    reverse - bool, True if we swap reactants and products, and change Ea to Ea from products
 
     properties:
     reactants - dict, species names as keys, Hf as value
@@ -210,62 +235,48 @@ class pes_plot():
 
     def find_reactions(self, species, temp):
         """
-        find all reactions that involve a certain species.
+        find all reactions that involve a certain species or set of species.
         species is a species object
-        rxns is a dictionary, reaction equation is the key, reaction object is the value
+        pes_rxn_dict is a dictionary, reaction equation is the key, PES reaction object is the value
         """
-        rxns = {}
+        pes_rxn_dict = {}
         species_names = [i.name for i in species]
-        species_ea = 0 
         print(species_names)
         # get combined H for species as the starting point for Ea
-        for i in species:
-            species_ea += self.get_h_ev(i, temp)
         
         for i,j in enumerate(self.gas.reactions()):
             if all(x in j.reactants.keys() for x in species_names):
-                rxns[j.equation] = j
-                # Ea = species_ea + (j.rate.activation_energy/1000**2)/96
-                Ea = species_ea + self.get_ea_ev(j)
-                print(j.equation, Ea)
-                self.pes_rxn_dict[i] = pes_reaction_combine(j, self.gas, self.surf)
+                pes_obj = pes_reaction_combine(j, self.gas, self.surf)
+                pes_rxn_dict[pes_obj.equation] = pes_obj
 
-            # # if we want to show the reverse reaction, specify that 
-            # # in call to pes_reaction_combine
-            # if all(x in j.products.keys() for x in species_names):
-            #     rxns[j.equation] = j
-            #     # Ea = species_ea + (j.rate.activation_energy/1000**2)/96
-            #     Ea = species_ea + self.get_ea_ev(j)
-            #     print(j.equation, Ea)
-            #     self.pes_rxn_dict[i] = pes_reaction_combine(j, self.gas, self.surf, reverse=1)
+            # if we want to show the reverse reaction, specify that 
+            # in call to pes_reaction_combine
+            if all(x in j.products.keys() for x in species_names):
+                pes_obj = pes_reaction_combine(j, self.gas, self.surf, reverse=True)
+                pes_rxn_dict[pes_obj.equation] = pes_obj
                 
         for i,j in enumerate(self.surf.reactions()):
             if all(x in j.reactants.keys() for x in species_names):
-                rxns[j.equation] = j
-                # Ea = species_ea + (j.rate.activation_energy/1000**2)/96
-                Ea = species_ea + self.get_ea_ev(j)
-                print(j.equation, Ea)
+                pes_obj = pes_reaction_combine(j, self.gas, self.surf)
+                pes_rxn_dict[pes_obj.equation] = pes_obj
 
-            # # if we want to show the reverse reaction, specify that 
-            # # in call to pes_reaction_combine
-            # if all(x in j.products.keys() for x in species_names):
-            #     rxns[j.equation] = j
-            #     # Ea = species_ea + (j.rate.activation_energy/1000**2)/96
-            #     Ea = species_ea + self.get_ea_ev(j)
-            #     print(j.equation, Ea)
-            #     self.pes_rxn_dict[i] = pes_reaction_combine(j, self.gas, self.surf, reverse=1)
+            # if we want to show the reverse reaction, specify that 
+            # in call to pes_reaction_combine
+            if all(x in j.products.keys() for x in species_names):
+                pes_obj = pes_reaction_combine(j, self.gas, self.surf, reverse=True)
+                pes_rxn_dict[pes_obj.equation] = pes_obj
         
         # if no reactions are found, throw an error
-        if len(rxns)==0:
+        if len(pes_rxn_dict)==0:
             raise Exception(f"no reactions found with reactants {species}")
                 
-        return rxns, reversible
+        return pes_rxn_dict
 
     def plot_pes_diagram(
         self, 
         species, 
-        width, 
-        height, 
+        width=20, 
+        height=40, 
         offset=None,
         dimension=None,
         space=None,
@@ -296,60 +307,48 @@ class pes_plot():
             else:
                 print(f'species {i} not found!')
 
-        rxns, reversible = self.find_reactions(species_obj, self.temp)
-
-        # for each reaction, make a "pes_rxn" object. add to a dict.  
-        # contains information for enthalpy and barriers
-        for i,j in rxns.items():
-
-            # create pes_rxns
-            if combined:
-                self.pes_rxn_dict[i] = pes_reaction_combine(j, self.gas, self.surf)
-            else: 
-                self.pes_rxn_dict[i] = pes_reaction(j, self.gas, self.surf)
-
-
+        rxns = self.find_reactions(species_obj, self.temp)
+        self.pes_rxn_dict.update(rxns)
 
         link_num = 0
-        for i,j in rxns.items():
+        for i,j in self.pes_rxn_dict.items():
             # generate a pes plot for each pes_reaction reactant
-            for k,l in self.pes_rxn_dict[i].reactants.items():
+            for k,l in j.reactants.items():
                 reac = k
                 H_r = l
 
                 # make a new energy level
-                self.diagram.add_level(H_r, k,0)
-                self.pes_rxn_dict[i].positions[0] = 0
+                self.diagram.add_level(H_r, k, 0)
+                j.positions[0] = 0
                     
-            self.pes_rxn_dict[i].links[0] = link_num
+            j.links[0] = link_num
             link_num+=1
 
-        for i,j in rxns.items():   
+        for i,j in self.pes_rxn_dict.items():
             # plot rxn Ea. for it to show up between species, should be here
-            rxn_eq = self.pes_rxn_dict[i].equation
-            rxn_Ea = self.pes_rxn_dict[i].barrier
+            rxn_eq = j.equation
+            rxn_Ea = j.barrier
 
             # make a new energy level
             self.diagram.add_level(rxn_Ea, rxn_eq, 1)
-            self.pes_rxn_dict[i].positions[1] = 1
+            j.positions[1] = 1
             
-            self.pes_rxn_dict[i].links[1] = link_num
+            j.links[1] = link_num
             link_num+=1
 
-        for i,j in rxns.items():
+        for i,j in self.pes_rxn_dict.items():
             # generate a pes plot for each pes_reaction product
 
-            for k,l in self.pes_rxn_dict[i].products.items():
+            for k,l in j.products.items():
                 prod = k
                 H_p = l
 
                 # make a new energy level
                 self.diagram.add_level(H_p, prod,2)
-                self.pes_rxn_dict[i].positions[2] = 2
-                print(self.diagram.data)
+                j.positions[2] = 2
 
             # add link id for line drawing
-            self.pes_rxn_dict[i].links[2] = link_num
+            j.links[2] = link_num
             link_num+=1
 
         
@@ -392,25 +391,14 @@ class pes_plot():
                 species_obj.append(self.surf.species(i))
 
         rxns = self.find_reactions(species_obj, self.temp)
+        self.pes_rxn_dict.update(rxns)
 
         # ED.position can be assigned to an integer (1,2,3,4, etc) 
         # so we do not need to use "l"
         # get starting position (whatever the last energy level position was)
         starting_pos = max(self.diagram.positions)
 
-        # get number of starting species for drawing links
-        species_str = ""
-        for i in species:
-            species_str += f"{i} "
-
         link_num = len(self.diagram.data)
-
-        # for each reaction, make a "pes_rxn" object. add to a dict.  
-        # contains information for enthalpy and barriers
-        for i,j in rxns.items():
-            # create pes_rxns
-            self.pes_rxn_dict[i] = pes_reaction_combine(j, self.gas, self.surf)
-
 
         for i,j in rxns.items():
             # generate a pes plot for each pes_reaction

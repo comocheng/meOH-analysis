@@ -13,7 +13,7 @@ else:
     cti_file = rmg_model_folder  + "base/cantera/chem_annotated.cti"
 
 # Reactor settings arrays for run
-Temps = [400]
+Temps = [500, 400]
 
 # pressure and volume flow are used in Graaf, but to limit 
 # the number of runs we will use the ones used for the plots
@@ -45,7 +45,7 @@ atol=1.0e-22
 
 
 # sensitivity settings
-sensitivity = False
+sensitivity = 2
 sensatol = 1e-6
 sensrtol = 1e-6
 
