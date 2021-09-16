@@ -44,6 +44,7 @@ class sbr:
         reactime=1e5,
         grabow=False,
         sens_species="CH3OH(8)",
+        graaf = False,
         ):
         """
         initialize object 
@@ -67,6 +68,7 @@ class sbr:
         sensrtol = sensitivity rtol
         reactime = time to run the reactor
         grabow = use grabow data (not tied to a commit)
+        graaf = bool, use graaf inlet conditions 
         """
         try:
             array_i = int(os.getenv("SLURM_ARRAY_TASK_ID"))
@@ -78,16 +80,19 @@ class sbr:
         self.v_array = v_array 
         self.h2_array = h2_array
         self.co2_array = co2_array
-        # generate settings array. 
-        self.settings = list(
-            itertools.product(
-                self.t_array, 
-                self.p_array, 
-                self.v_array, 
-                self.h2_array, 
-                self.co2_array
+        # generate settings array. if using Graaf values, load them from csv
+        if graaf:
+            self.settings = self.load_graaf_data()
+        else: 
+            self.settings = list(
+                itertools.product(
+                    self.t_array, 
+                    self.p_array, 
+                    self.v_array, 
+                    self.h2_array, 
+                    self.co2_array
+                    )
                 )
-            )
         
         # get information for git repository that model comes from. 
         # alternatively, if the grabow model is used, use a dummy 
@@ -270,6 +275,48 @@ class sbr:
         # set reactime for transient reactor
         self.reactime = reactime
    
+    def load_graaf_data(self):
+        """
+        Julia Treese
+        Edited part to get Graaf conditions
+        get Graaf conditions into a list of lists to run
+        """
+        file_name_feed1 = "../Graaf_data/Feed_1.xlsx"
+        file_name_feed2 = "../Graaf_data/Feed_2.xlsx"
+        file_name_feed3 = "../Graaf_data/Feed_3.xlsx"
+        file_name_feed4 = "../Graaf_data/Feed_4.xlsx"
+        file_name_feed5 = "../Graaf_data/Feed_5.xlsx"
+
+        df_1 = pd.read_excel(file_name_feed1, engine='openpyxl')
+        df_2 = pd.read_excel(file_name_feed2, engine='openpyxl')
+        df_3 = pd.read_excel(file_name_feed3, engine='openpyxl')
+        df_4 = pd.read_excel(file_name_feed4, engine='openpyxl')
+        df_5 = pd.read_excel(file_name_feed5, engine='openpyxl')
+
+
+        # Needed: [T, P, V, YH2, YCO2] -- Create a list of lists
+        # Should be columns 2 (T), 1 (P), 3 (V), 6 (YH2), 5 (YCO2)
+        # Each list is the conditions of one experimental Graaf run
+
+        # List of dataframes with feed conditions
+        df_list = [df_1, df_2, df_3, df_4, df_5]
+
+        # Loop through dataframes and create a list of conditions based on Graaf runs
+        # Loop through each row in the dataframes and add that row's conditions to the list of lists
+
+        settings = []
+
+        for i in range(len(df_list)):
+            df = df_list[i]
+            for row in range(len(df)):
+                row_conditions = [df.iloc[row, df.columns.get_loc('T(K)')], 
+                                df.iloc[row, df.columns.get_loc('p (bar)')], 
+                                df.iloc[row,df.columns.get_loc('10^6 * V (M^3/s)')], 
+                                df.iloc[row,df.columns.get_loc('feed Yco2')], 
+                                df.iloc[row,df.columns.get_loc('CO2/(CO+CO2)')],]
+                settings.append(row_conditions)
+        return settings
+
     def save_pictures(self, git_path="", species_path="", overwrite=False):
         """
         Save a folder full of molecule pictures, needed for the pretty dot files.

@@ -185,6 +185,44 @@ class ED:
         y = self.energies[level_id]
         self.electons_boxes.append((x, y, boxes, electrons, side, spacing_f))
 
+    def create_data(self):
+        '''
+        Method of ED class
+        instantiates "data" object, so we do not have to plot each time we need to change that structure
+
+        Returns
+        -------
+        fig (plt.figure) and ax (fig.add_subplot())
+
+        '''
+
+
+        self.data = list(zip(self.energies,  # 0
+                        self.positions,  # 1
+                        self.bottom_texts,  # 2
+                        self.top_texts,  # 3
+                        self.colors,  # 4
+                        self.right_texts,  # 5
+                        self.left_texts,))  # 6
+
+        # for idx, link in enumerate(self.links):
+        #     # here we connect the levels with the links
+        #     # x1, x2   y1, y2
+        #     for i in link:
+        #         # i is a tuple: (end_level_id,ls,linewidth,color)
+        #         start = self.positions[idx]*(self.dimension+self.space)
+        #         x1 = start + self.dimension
+        #         x2 = self.positions[i[0]]*(self.dimension+self.space)
+        #         y1 = self.energies[idx]
+        #         y2 = self.energies[i[0]]
+        #         line = Line2D([x1, x2], [y1, y2],
+        #                       ls=i[1],
+        #                       linewidth=i[2],
+        #                       color=i[3])
+
+
+
+
     def plot(
         self, 
         show_IDs=False, 
@@ -224,6 +262,7 @@ class ED:
         if not ax:
             fig = plt.figure()
             ax = fig.add_subplot(111, aspect=self.aspect)
+        
         # Otherwise register the axes and figure the user passed.
         else:
             self.ax = ax
