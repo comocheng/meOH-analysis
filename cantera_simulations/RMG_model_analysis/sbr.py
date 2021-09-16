@@ -31,7 +31,7 @@ class sbr:
         rmg_model_path, 
         t_array=[528],
         p_array=[75],
-        v_array=[0.00424],
+        v_array=[4.24e-6],
         h2_array=[0.75],
         co2_array=[0.5],
         rtol=1.0e-11,
@@ -45,6 +45,7 @@ class sbr:
         grabow=False,
         sens_species="CH3OH(8)",
         graaf = False,
+        cat_weight_array=[4.24e-3],
         ):
         """
         initialize object 
@@ -69,6 +70,7 @@ class sbr:
         reactime = time to run the reactor
         grabow = use grabow data (not tied to a commit)
         graaf = bool, use graaf inlet conditions 
+        cat_weight_array = weight of the catalyst (in kg)
         """
         try:
             array_i = int(os.getenv("SLURM_ARRAY_TASK_ID"))
@@ -80,6 +82,7 @@ class sbr:
         self.v_array = v_array 
         self.h2_array = h2_array
         self.co2_array = co2_array
+        self.cat_weight_array = cat_weight_array # [kg]
         # generate settings array. if using Graaf values, load them from csv
         if graaf:
             self.settings = self.load_graaf_data()
@@ -90,7 +93,8 @@ class sbr:
                     self.p_array, 
                     self.v_array, 
                     self.h2_array, 
-                    self.co2_array
+                    self.co2_array,
+                    self.cat_weight_array,
                     )
                 )
         
@@ -216,7 +220,7 @@ class sbr:
         self.site_density = (
             self.surf.site_density * 1000
         )  # [mol/m^2]cantera uses kmol/m^2, convert to mol/m^2
-        self.cat_weight = 4.24e-3  # [kg]
+        self.cat_weight = self.settings[array_i][5]
         self.cat_site_per_wt = (300 * 1e-6) * 1000  # [mol/kg] 1e-6mol/micromole, 1000g/kg
         self.cat_area = self.site_density / (self.cat_weight * self.cat_site_per_wt)  # [m^3]
         self.cat_area_str = "%s" % "%.3g" % self.cat_area
@@ -286,20 +290,27 @@ class sbr:
         file_name_feed3 = "../Graaf_data/Feed_3.xlsx"
         file_name_feed4 = "../Graaf_data/Feed_4.xlsx"
         file_name_feed5 = "../Graaf_data/Feed_5.xlsx"
+        file_name_feed6a = "../Graaf_data/Feed_6a.xlsx"
+        file_name_feed6b = "../Graaf_data/Feed_6b.xlsx"
+        file_name_feed7a = "../Graaf_data/Feed_7a.xlsx"
+        file_name_feed7b = "../Graaf_data/Feed_5.xlsx"
 
         df_1 = pd.read_excel(file_name_feed1, engine='openpyxl')
         df_2 = pd.read_excel(file_name_feed2, engine='openpyxl')
         df_3 = pd.read_excel(file_name_feed3, engine='openpyxl')
         df_4 = pd.read_excel(file_name_feed4, engine='openpyxl')
         df_5 = pd.read_excel(file_name_feed5, engine='openpyxl')
+        df_6a = pd.read_excel(file_name_feed6a, engine='openpyxl')
+        df_6b = pd.read_excel(file_name_feed6b, engine='openpyxl')
+        df_7a = pd.read_excel(file_name_feed7a, engine='openpyxl')
+        df_7b = pd.read_excel(file_name_feed7b, engine='openpyxl')
 
-
-        # Needed: [T, P, V, YH2, YCO2] -- Create a list of lists
-        # Should be columns 2 (T), 1 (P), 3 (V), 6 (YH2), 5 (YCO2)
+        # Needed: [T, P, V, YH2, YCO2, wcat] -- Create a list of lists
+        # Should be columns 2 (T), 1 (P), 3 (V), 6 (YH2), 5 (YCO2) 6 (cat weight)
         # Each list is the conditions of one experimental Graaf run
 
         # List of dataframes with feed conditions
-        df_list = [df_1, df_2, df_3, df_4, df_5]
+        df_list = [df_1, df_2, df_3, df_4, df_5, df_6a, df_6b, df_7a, df_7b]
 
         # Loop through dataframes and create a list of conditions based on Graaf runs
         # Loop through each row in the dataframes and add that row's conditions to the list of lists
@@ -311,9 +322,10 @@ class sbr:
             for row in range(len(df)):
                 row_conditions = [df.iloc[row, df.columns.get_loc('T(K)')], 
                                 df.iloc[row, df.columns.get_loc('p (bar)')], 
-                                df.iloc[row,df.columns.get_loc('10^6 * V (M^3/s)')], 
+                                df.iloc[row,df.columns.get_loc('10^6 * V (M^3/s)')]*1e-6, # convert from graaf format
                                 df.iloc[row,df.columns.get_loc('feed Yco2')], 
-                                df.iloc[row,df.columns.get_loc('CO2/(CO+CO2)')],]
+                                df.iloc[row,df.columns.get_loc('CO2/(CO+CO2)')],
+                                df.iloc[row,df.columns.get_loc('wcat (g)')]*1e-3] # convert from g to kg
                 settings.append(row_conditions)
         return settings
 
