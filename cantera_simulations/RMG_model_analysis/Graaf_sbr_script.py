@@ -1,4 +1,3 @@
-
 import cantera as ct
 import logging
 import sys
@@ -13,34 +12,12 @@ else:
     rmg_model_folder  = "../../../meOH-synthesis/"
     cti_file = rmg_model_folder  + "base/cantera/chem_annotated.cti"
 
-# Reactor settings arrays for run
-Temps = [400, 500, 600]
-
-# pressure and volume flow are used in Graaf, but to limit 
-# the number of runs we will use the ones used for the plots
-# Pressures = [15, 30, 50, 75]
-# volume_flows = [0.00424, 0.0106, 0.02544]
-Pressures = [75]
-volume_flows = [0.00424]
-
-# Mole fractions from runs for reference (min max and mid from Graaf data)
-# X_cos = [0.053, 0.1365, 0.220]
-# X_co2s = [0.261,0.1205, 0.261]
-# X_h2s = [0.625, 0.7625, 0.900]
-
-# CO+CO2/H2
-# H2_fraction = [0.8,0.5,0.95,0.75]
-H2_fraction = [0.8, 0.5, 0.95, 0.75]
-
-# CO2/CO
-CO_CO2_ratio = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-
-
+# set energy
 energy = "off"
 
 # reactor conditions
 reactime = 1e4 # time to run reactor, not residence time
-reactor_type = 1 # ideal gas reactor
+reactor_type = 1
 energy = "off"
 rtol=1.0e-11
 atol=1.0e-22
@@ -52,12 +29,13 @@ sensatol = 1e-5
 sensrtol = 1e-5
 sens_species = ["CH3OH(8)"]
 
-# use grabow model
+# don't use grabow model
 grabow = False
 
+# use  graaf inlets
+graaf = True
 
 solved = False
-
 while not solved:  
     try: 
         # run to SS. if solver fails, change rtol and atol. 
@@ -65,11 +43,6 @@ while not solved:
         sbr_ss = sbr.sbr(
             cti_file,
             rmg_model_folder, 
-            t_array=Temps,
-            p_array=Pressures,
-            v_array=volume_flows,
-            h2_array=H2_fraction,
-            co2_array=CO_CO2_ratio,
             rtol=rtol,
             atol=atol,
             reactor_type=reactor_type,

@@ -13,7 +13,7 @@
 #SBATCH --mail-type=FAIL,END
 
 #an array for the job. usually 107, testing use 2
-#SBATCH --array=1-3
+#SBATCH --array=1-107
 
 
 ####################################################

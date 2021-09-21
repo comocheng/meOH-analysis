@@ -1,4 +1,3 @@
-
 import pandas as pd
 import numpy as np
 import time
@@ -24,6 +23,12 @@ class sbr:
 # Stirred batch reactor script
 # Chris Blais
 # Northeastern University
+#
+# runs a spinning basket reactor to the specifications in:
+# Kinetics of low-pressure methanol synthesis
+# Gh Graaf; Ej Stamhuis; Aacm Beenackers
+# 1988
+# 10.1016/0009-2509(88)85127-3
 ###############################################
     def __init__(
         self,
@@ -34,48 +39,55 @@ class sbr:
         v_array=[4.24e-6],
         h2_array=[0.75],
         co2_array=[0.5],
+        cat_weight_array=[4.24e-3],
         rtol=1.0e-11,
         atol=1.0e-22,
-        reactor_type=0,
-        energy="off",
         sensitivity=0,
         sensatol=1e-6,
         sensrtol=1e-6,
-        reactime=1e5,
-        grabow=False,
         sens_species="CH3OH(8)",
+        reactor_type=0,
+        energy="off",
+        reactime=1e5,
+        timestep = 0.1,
+        grabow=False,
         graaf = False,
-        cat_weight_array=[4.24e-3],
+        fluxes = False,
+        csp = False,
         ):
         """
-        initialize object 
+        initialize sbr object 
         yaml_file = cti or yaml file for mechanism
-        t_array = temperature (K)
-        p_array = pressure array (atm)
-        v_array = volume flow rate array (m^3/s)
-        h2_array=[0.75],
-        co2_array=[0.5],
-        rtol = relative tolerance
-        atol = absolute tolerance
-        reactor_type = 0 - Reactor, 1 - IdealGasReactor, 
-                       2 - ConstPressureReactor, 3 - IdealGasConstPressureReactor
-        energy = str, "on" if non-isothermal, "off" if isothermal
+        t_array = list of floats, temperature (K)
+        p_array = list of float, pressure array (atm)
+        v_array = list of float, volume flow rate array (m^3/s)
+        h2_array= list of floats,
+        co2_array= list of float[0.5],
+        rtol = float, relative tolerance
+        atol = float, absolute tolerance
         sensitivity = int (0-3) perform sensitivity analysis on: 
                         0: nothing
                         1: Kinetics
                         2: Thermo
                         3: Kinetics + Thermo
-        sensatol = sensitivity atol
-        sensrtol = sensitivity rtol
-        reactime = time to run the reactor
-        grabow = use grabow data (not tied to a commit)
+        sensatol = float, sensitivity atol
+        sensrtol = float, sensitivity rtol
+        sens_species = list of str, species to get sensitivity for
+        reactor_type = 0 - Reactor, 1 - IdealGasReactor, 
+                       2 - ConstPressureReactor, 3 - IdealGasConstPressureReactor
+        energy = str, "on" if non-isothermal, "off" if isothermal
+        reactime = flaot, total time to run the reactor (for transient simulation)
+        timestep = float, step taken for reactor simulation (for transient simulation)
+        grabow = bool, use grabow data (not tied to a commit)
         graaf = bool, use graaf inlet conditions 
-        cat_weight_array = weight of the catalyst (in kg)
+        cat_weight_array = list of float, weight of the catalyst (in kg)
+        fluxes = bool, if true create flux diagrams
+        csp = bool, if true saves specially formatted .dat file for csp analysis
         """
         try:
-            array_i = int(os.getenv("SLURM_ARRAY_TASK_ID"))
+            self.array_i = int(os.getenv("SLURM_ARRAY_TASK_ID"))
         except TypeError:
-            array_i = 0
+            self.array_i = 0
 
         self.t_array = t_array
         self.p_array = p_array
@@ -83,9 +95,11 @@ class sbr:
         self.h2_array = h2_array
         self.co2_array = co2_array
         self.cat_weight_array = cat_weight_array # [kg]
+
         # generate settings array. if using Graaf values, load them from csv
         if graaf:
             self.settings = self.load_graaf_data()
+            self.graaf_compare = "Graaf_experiment_comparison"
         else: 
             self.settings = list(
                 itertools.product(
@@ -97,7 +111,8 @@ class sbr:
                     self.cat_weight_array,
                     )
                 )
-        
+            self.graaf_compare = "no_experiment_comparison" 
+
         # get information for git repository that model comes from. 
         # alternatively, if the grabow model is used, use a dummy 
         # date, commit and hash
@@ -120,6 +135,7 @@ class sbr:
             git_msg = str(repo.head.commit.message)[0:50].replace(" ", "_").replace("'", "_").replace("\n", "")
             self.git_file_string = f"{git_date}_{git_sha}_{git_msg}"
 
+
         # set sensitivity string for file path name
         self.sensitivity = sensitivity
         if self.sensitivity == 1: 
@@ -136,14 +152,14 @@ class sbr:
         pi = math.pi
 
         # set initial temps& pressures
-        self.temp = self.settings[array_i][0] # kelvin
+        self.temp = self.settings[self.array_i][0] # kelvin
         self.temp_str = str(self.temp)[0:3]
-        self.pressure =  self.settings[array_i][1] * ct.one_atm  # Pascals
+        self.pressure =  self.settings[self.array_i][1] * ct.one_atm  # Pascals
 
         # set mole fractions of each species
-        self.X_h2 = self.settings[array_i][3]
-        self.x_h2_str = str(self.X_h2)[0:3].replace(".", "_")
-        self.x_CO_CO2_str = str(self.settings[array_i][4])[0:3].replace(".", "_")
+        self.X_h2 = self.settings[self.array_i][3]
+        self.x_h2_str = str(self.X_h2)[0:5].replace(".", "_")
+        self.x_CO_CO2_str = str(self.settings[self.array_i][4])[0:5].replace(".", "_")
 
         # Per Grabow experiments, add in H2O for X=0.75 H2 run
         if self.X_h2 == 0.75:
@@ -151,8 +167,8 @@ class sbr:
         else:
             self.X_h2o = 0
 
-        self.X_co = (1 - (self.X_h2 + self.X_h2o)) * (self.settings[array_i][4])
-        self.X_co2 = (1 - (self.X_h2 + self.X_h2o)) * (1 - self.settings[array_i][4])
+        self.X_co = (1 - (self.X_h2 + self.X_h2o)) * (self.settings[self.array_i][4])
+        self.X_co2 = (1 - (self.X_h2 + self.X_h2o)) * (1 - self.settings[self.array_i][4])
 
         # molecular weights for mass flow calculations
         mw_co = 28.01e-3  # [kg/mol]
@@ -220,7 +236,7 @@ class sbr:
         self.site_density = (
             self.surf.site_density * 1000
         )  # [mol/m^2]cantera uses kmol/m^2, convert to mol/m^2
-        self.cat_weight = self.settings[array_i][5]
+        self.cat_weight = self.settings[self.array_i][5]
         self.cat_site_per_wt = (300 * 1e-6) * 1000  # [mol/kg] 1e-6mol/micromole, 1000g/kg
         self.cat_area = self.site_density / (self.cat_weight * self.cat_site_per_wt)  # [m^3]
         self.cat_area_str = "%s" % "%.3g" % self.cat_area
@@ -252,7 +268,7 @@ class sbr:
         # flow controllers (Graaf measured flow at 293.15 and 1 atm)
         one_atm = ct.one_atm
         FC_temp = 293.15
-        self.volume_flow = self.settings[array_i][2]  # [m^3/s]
+        self.volume_flow = self.settings[self.array_i][2]  # [m^3/s]
         self.molar_flow = self.volume_flow * one_atm / (8.3145 * FC_temp)  # [mol/s]
         self.mass_flow = self.molar_flow * (
             self.X_co * mw_co + self.X_co2 * mw_co2 + self.X_h2 * mw_h2 + self.X_h2o * mw_h2o
@@ -278,6 +294,13 @@ class sbr:
 
         # set reactime for transient reactor
         self.reactime = reactime
+        self.timestep = timestep
+
+        # set flux analysis
+        self.fluxes = fluxes
+
+        # set csp analysis
+        self.csp = csp
    
     def load_graaf_data(self):
         """
@@ -320,13 +343,14 @@ class sbr:
         for i in range(len(df_list)):
             df = df_list[i]
             for row in range(len(df)):
-                row_conditions = [df.iloc[row, df.columns.get_loc('T(K)')], 
-                                df.iloc[row, df.columns.get_loc('p (bar)')], 
-                                df.iloc[row,df.columns.get_loc('10^6 * V (M^3/s)')]*1e-6, # convert from graaf format
-                                df.iloc[row,df.columns.get_loc('feed Yco2')], 
-                                df.iloc[row,df.columns.get_loc('CO2/(CO+CO2)')],
-                                df.iloc[row,df.columns.get_loc('wcat (g)')]*1e-3] # convert from g to kg
-                settings.append(row_conditions)
+                if not np.isnan(df.iloc[row, df.columns.get_loc('T(K)')]):
+                    row_conditions = [df.iloc[row, df.columns.get_loc('T(K)')], 
+                                    df.iloc[row, df.columns.get_loc('p (bar)')], 
+                                    df.iloc[row,df.columns.get_loc('10^6 * V (M^3/s)')]*1e-6, # convert from graaf format
+                                    df.iloc[row,df.columns.get_loc('feed Yco2')], 
+                                    df.iloc[row,df.columns.get_loc('CO2/(CO+CO2)')],
+                                    df.iloc[row,df.columns.get_loc('wcat (g)')]*1e-3] # convert from g to kg
+                    settings.append(row_conditions)
         return settings
 
     def save_pictures(self, git_path="", species_path="", overwrite=False):
@@ -459,8 +483,8 @@ class sbr:
                 diagram.title = f"Reaction path diagram following {element} in {phase}"
                 # diagram.label_threshold = 0.0001
 
-                dot_file = f"{suffix}/reaction_path_{element}_{phase}_{timepoint}.dot"
-                img_file = f"{suffix}/reaction_path_{element}_{phase}_{timepoint}.png"
+                dot_file = f"{suffix}/run_number_{self.array_i}_reaction_path_{element}_{phase}_{timepoint}.dot"
+                img_file = f"{suffix}/run_number_{self.array_i}_reaction_path_{element}_{phase}_{timepoint}.png"
                 dot_bin_path = (
                     "/Users/blais.ch/anaconda3/pkgs/graphviz-2.40.1-hefbbd9a_2/bin/dot"
                 )
@@ -483,47 +507,52 @@ class sbr:
         Run single reactor to a set time
         """
 
-        # self.git_file_string = self.git_file_string.replace("&", "\&")
-        # set paths for saving species pictures, fluxes, and csv files
-        self.species_path = (
-            os.path.dirname(os.path.abspath(__file__))
-            + f"/{self.git_file_string}/species_pictures"
-        )
+        # set/create paths for saving species pictures, fluxes, and csv files
+
+        if self.fluxes: 
+            self.species_path = (
+                os.path.dirname(os.path.abspath(__file__))
+                + f"/{self.git_file_string}/species_pictures"
+            )
+
+            self.flux_path = (
+                os.path.dirname(os.path.abspath(__file__))
+                + f"/{self.git_file_string}/{self.graaf_compare}/transient/{self.reactor_type_str}/energy_{self.energy}/{self.sensitivity_str}/{self.temp_str}/flux_diagrams/{self.x_h2_str}/{self.x_CO_CO2_str}"
+            )
+            
+            try:
+                os.makedirs(self.species_path, exist_ok=True)
+                self.save_pictures(git_path=self.rmg_model_path, species_path=self.species_path)
+            except OSError as error:
+                print(error)
+
+            try:
+                os.makedirs(self.flux_path, exist_ok=True)
+            except OSError as error:
+                print(error)
+
+
+        if self.csp: 
+            try:
+                os.makedirs(results_path_csp, exist_ok=True)
+                print(results_path_csp)
+            except OSError as error:
+                print(error)
+
+            results_path_csp = (
+                os.path.dirname(os.path.abspath(__file__))
+                + f"/{self.git_file_string}/{self.graaf_compare}/transient/{self.reactor_type_str}/energy_{self.energy}/{self.sensitivity_str}/{self.temp_str}/csp"
+            )
+
+
+        # save csv results regardless
         self.results_path = (
             os.path.dirname(os.path.abspath(__file__))
-        + f"/{self.git_file_string}/transient/{self.reactor_type_str}/energy_{self.energy}/{self.sensitivity_str}/{self.temp_str}/results"
+        + f"/{self.git_file_string}/{self.graaf_compare}/transient/{self.reactor_type_str}/energy_{self.energy}/{self.sensitivity_str}/{self.temp_str}/results"
         )
-        results_path_csp = (
-            os.path.dirname(os.path.abspath(__file__))
-            + f"/{self.git_file_string}/transient/{self.reactor_type_str}/energy_{self.energy}/{self.sensitivity_str}/{self.temp_str}/csp"
-        )
-
-        self.flux_path = (
-            os.path.dirname(os.path.abspath(__file__))
-            + f"/{self.git_file_string}/transient/{self.reactor_type_str}/energy_{self.energy}/{self.sensitivity_str}/{self.temp_str}/flux_diagrams/{self.x_h2_str}/{self.x_CO_CO2_str}"
-        )
-        
-        # create folders if they don't already exist
-        try:
-            os.makedirs(self.species_path, exist_ok=True)
-            self.save_pictures(git_path=self.rmg_model_path, species_path=self.species_path)
-        except OSError as error:
-            print(error)
 
         try:
             os.makedirs(self.results_path, exist_ok=True)
-        except OSError as error:
-            print(error)
-
-        try:
-            os.makedirs(results_path_csp, exist_ok=True)
-            print(results_path_csp)
-        except OSError as error:
-            print(error)
-            print("no results for CSP saved")
-
-        try:
-            os.makedirs(self.flux_path, exist_ok=True)
         except OSError as error:
             print(error)
         
@@ -538,18 +567,23 @@ class sbr:
         surfrxn_ROP_str = [i + " ROP [kmol/m^2 s]" for i in self.surf.reaction_equations()]
         self.output_filename = (
             self.results_path
-            + f"/Spinning_basket_area_{self.cat_area_str}_energy_{self.energy}"
+            + f"/run_number_{self.array_i}_Spinning_basket_area_{self.cat_area_str}_energy_{self.energy}"
             + f"_temp_{self.temp}_h2_{self.x_h2_str}_COCO2_{self.x_CO_CO2_str}.csv"
         )
         self.output_filename_csp = (
             results_path_csp
-            + f"/CSP_Spinning_basket_area_{self.cat_area_str}_energy_{self.energy}"
+            + f"/run_number_{self.array_i}_CSP_Spinning_basket_area_{self.cat_area_str}_energy_{self.energy}"
             + f"_temp_{self.temp}_h2_{self.x_h2_str}_COCO2_{self.x_CO_CO2_str}.dat"
         )
+
+        if csp: 
+            outfile_csp = open(self.output_filename_csp, "w")
+            writer_csp = csv.writer(outfile_csp, delimiter='\t')
+        
         outfile = open(self.output_filename, "w")
-        outfile_csp = open(self.output_filename_csp, "w")
         writer = csv.writer(outfile)
-        writer_csp = csv.writer(outfile_csp, delimiter='\t')
+
+
 
         # log the filepath so we know where to go if there's a problem 
         logging.warning(self.results_path+self.output_filename)
@@ -572,6 +606,7 @@ class sbr:
             "Atol",
             "reactor type",
             "energy on?"
+            "catalyst weight (kg)"
             ]
 
         # Sensitivity atol, rtol, and strings for gas and surface reactions if selected
@@ -609,7 +644,7 @@ class sbr:
                 + sens_list
             )
 
-        if self.sensitivity ==2: # thermo sensitivity
+        elif self.sensitivity ==2: # thermo sensitivity
             self.sim.rtol_sensitivity = self.sensrtol
             self.sim.atol_sensitivity = self.sensatol
 
@@ -642,7 +677,7 @@ class sbr:
                 + sens_list
             )
 
-        if self.sensitivity ==3: # both sensitivity
+        elif self.sensitivity ==3: # both sensitivity
             self.sim.rtol_sensitivity = self.sensrtol
             self.sim.atol_sensitivity = self.sensatol
 
@@ -698,22 +733,22 @@ class sbr:
                 + gasrxn_ROP_str
                 + surfrxn_ROP_str
             )
-
-        writer_csp.writerow([
-            "iter", 
-            "t", 
-            "dt", 
-            "Density[kg/m3]", 
-            "Pressure[Pascal]", 
-            "Temperature[K]",
-            ]
-            + self.gas.species_names
-            + self.surf.species_names
-        )
+        if self.csp:
+            writer_csp.writerow([
+                "iter", 
+                "t", 
+                "dt", 
+                "Density[kg/m3]", 
+                "Pressure[Pascal]", 
+                "Temperature[K]",
+                ]
+                + self.gas.species_names
+                + self.surf.species_names
+            )
 
         # set initial time, timestep, step number
         t = 0.0
-        dt = 0.1
+        dt = self.timestep
         iter_ct = 0
 
         # run the simulation
@@ -721,17 +756,18 @@ class sbr:
         while t < self.reactime:
             # save flux diagrams at beginning of run
             if first_run == True:
-                self.save_flux_diagrams(
-                    self.gas, 
-                    suffix=self.flux_path, 
-                    timepoint="beginning", 
-                    species_path=self.species_path
-                    )
-                self.save_flux_diagrams(
-                    self.surf, 
-                    suffix=self.flux_path, 
-                    timepoint="beginning", 
-                    species_path=self.species_path)
+                if self.fluxes:
+                    self.save_flux_diagrams(
+                        self.gas, 
+                        suffix=self.flux_path, 
+                        timepoint="beginning", 
+                        species_path=self.species_path
+                        )
+                    self.save_flux_diagrams(
+                        self.surf, 
+                        suffix=self.flux_path, 
+                        timepoint="beginning", 
+                        species_path=self.species_path)
                 first_run = False
             t += dt
             self.sim.advance(t)
@@ -759,10 +795,10 @@ class sbr:
                 self.sim.atol,
                 self.reactor_type_str,
                 self.energy,
+                self.cat_weight,
             ]
             # if sensitivity, get sensitivity for sensitive 
             # species i (e.g. methanol) in reaction j
-
             if self.sensitivity == 1: # kinetic sensitivity
                 for i in self.sens_species:
                     g_nrxn = self.gas.n_reactions
@@ -799,11 +835,11 @@ class sbr:
 
                     gas_therm_sensitivities = [
                         self.sim.sensitivity(i,j)
-                        for j in range(g_nrxn+s_nrxn,g_nrxn+s_nrxn+g_nspec)
+                        for j in range(g_nspec)
                         ]
                     surf_therm_sensitivities = [
                         self.sim.sensitivity(i,j)
-                        for j in range(g_nrxn+s_nrxn+g_nspec,g_nrxn+s_nrxn+g_nspec+s_nspec)
+                        for j in range(g_nspec,g_nspec+s_nspec)
                         ]
 
                     sensitivities_all = (
@@ -874,73 +910,78 @@ class sbr:
                     + gas_net_rates_of_progress
                     + list(self.surf.net_rates_of_progress)
                 )
-                
-            writer_csp.writerow(
-                [
-                    iter_ct,
-                    self.sim.time,
-                    dt,
-                    self.gas.density,
-                    self.gas.P,
-                    self.gas.T,
-                ]
-                + list(self.gas.X)
-                + list(self.surf.X)
-            )
+            if self.csp:    
+                writer_csp.writerow(
+                    [
+                        iter_ct,
+                        self.sim.time,
+                        dt,
+                        self.gas.density,
+                        self.gas.P,
+                        self.gas.T,
+                    ]
+                    + list(self.gas.X)
+                    + list(self.surf.X)
+                )
 
             iter_ct += 1
 
         outfile.close()
-        outfile_csp.close()
+        if self.csp: 
+            outfile_csp.close()
         
         
         # save flux diagrams at the end of the run
-        self.save_flux_diagrams(
-            self.gas, 
-            suffix=self.flux_path, 
-            timepoint="end", 
-            species_path=self.species_path
-            )
-        self.save_flux_diagrams(
-            self.surf, 
-            suffix=self.flux_path, 
-            timepoint="end", 
-            species_path=self.species_path
-            )
-        return
+        if self.fluxes:
+            self.save_flux_diagrams(
+                self.gas, 
+                suffix=self.flux_path, 
+                timepoint="end", 
+                species_path=self.species_path
+                )
+            self.save_flux_diagrams(
+                self.surf, 
+                suffix=self.flux_path, 
+                timepoint="end", 
+                species_path=self.species_path
+                )
+            return
 
     def run_reactor_ss(self):
         """
         Run single reactor to steady state
         """
         # set paths for saving species pictures, fluxes, and csv files
-        self.species_path = (
-            os.path.dirname(os.path.abspath(__file__))
-            + f"/{self.git_file_string}/species_pictures"
-        )
+
+        if self.fluxes: 
+            self.species_path = (
+                os.path.dirname(os.path.abspath(__file__))
+                + f"/{self.git_file_string}/species_pictures"
+            )
+
+            self.flux_path = (
+                os.path.dirname(os.path.abspath(__file__))
+                + f"/{self.git_file_string}/{self.graaf_compare}/steady_state/{self.reactor_type_str}/energy_{self.energy}/{self.sensitivity_str}/{self.temp_str}/flux_diagrams/{self.x_h2_str}/{self.x_CO_CO2_str}"
+            )
+            
+            try:
+                os.makedirs(self.species_path, exist_ok=True)
+                self.save_pictures(git_path=self.rmg_model_path, species_path=self.species_path)
+            except OSError as error:
+                print(error)
+
+            try:
+                os.makedirs(self.flux_path, exist_ok=True)
+            except OSError as error:
+                print(error)
+        
+        # save csv results regardless
         self.results_path = (
             os.path.dirname(os.path.abspath(__file__))
-        + f"/{self.git_file_string}/steady_state/{self.reactor_type_str}/energy_{self.energy}/{self.sensitivity_str}/{self.temp_str}/results"
+            + f"/{self.git_file_string}/{self.graaf_compare}/steady_state/{self.reactor_type_str}/energy_{self.energy}/{self.sensitivity_str}/{self.temp_str}/results"
         )
-        self.flux_path = (
-            os.path.dirname(os.path.abspath(__file__))
-            + f"/{self.git_file_string}/steady_state/{self.reactor_type_str}/energy_{self.energy}/{self.sensitivity_str}/{self.temp_str}/flux_diagrams/{self.x_h2_str}/{self.x_CO_CO2_str}"
-        )
-
-        # create folders if they don't already exist
-        try:
-            os.makedirs(self.species_path, exist_ok=True)
-            self.save_pictures(git_path=self.rmg_model_path, species_path=self.species_path)
-        except OSError as error:
-            print(error)
-
         try:
             os.makedirs(self.results_path, exist_ok=True)
-        except OSError as error:
-            print(error)
-
-        try:
-            os.makedirs(self.flux_path, exist_ok=True)
         except OSError as error:
             print(error)
         
@@ -954,7 +995,7 @@ class sbr:
         surfrxn_ROP_str = [i + " ROP [kmol/m^2 s]" for i in self.surf.reaction_equations()]
         self.output_filename = (
             self.results_path
-            + f"/Spinning_basket_area_{self.cat_area_str}_energy_{self.energy}"
+            + f"/run_number_{self.array_i}_Spinning_basket_area_{self.cat_area_str}_energy_{self.energy}"
             + f"_temp_{self.temp}_h2_{self.x_h2_str}_COCO2_{self.x_CO_CO2_str}.csv"
         )
 
@@ -981,6 +1022,7 @@ class sbr:
             "Atol",
             "reactor type",
             "energy on?"
+            "catalyst weight (kg)"
             ]
 
         # Sensitivity atol, rtol, and strings for gas and surface reactions if selected
@@ -1134,6 +1176,7 @@ class sbr:
             self.sim.atol,
             self.reactor_type_str,
             self.energy,
+            self.cat_weight,
         ]
         # if sensitivity, get sensitivity for sensitive 
         # species i (e.g. methanol) in reaction j
@@ -1253,8 +1296,9 @@ class sbr:
         
         
         # save flux diagrams at the end of the run
-        self.save_flux_diagrams(self.gas, suffix=self.flux_path, timepoint="end", species_path=self.species_path)
-        self.save_flux_diagrams(self.surf, suffix=self.flux_path, timepoint="end", species_path=self.species_path)
+        if self.fluxes:
+            self.save_flux_diagrams(self.gas, suffix=self.flux_path, timepoint="end", species_path=self.species_path)
+            self.save_flux_diagrams(self.surf, suffix=self.flux_path, timepoint="end", species_path=self.species_path)
         return
 
 
@@ -1271,7 +1315,7 @@ def run_sbr_test():
         rmg_model_folder, 
         t_array=[528],
         p_array=[75],
-        v_array=[0.00424],
+        v_array=[4.24e-6],
         h2_array=[0.75],
         co2_array=[0.5],
         rtol=1.0e-11,
