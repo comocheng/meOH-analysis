@@ -21,5 +21,8 @@ sbr_ss = MinSBR(
     reactime=1e5,
 )
 
+results = sbr_ss.run_reactor_ss_memory()
+print("I made a minimal SBR. Now what's in it?")
+
 # run to SS
-sbr_ss.run_reactor_ss()
+

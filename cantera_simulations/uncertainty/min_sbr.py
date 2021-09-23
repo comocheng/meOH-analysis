@@ -234,6 +234,7 @@ class MinSBR:
         self.reactime = reactime
         self.timestep = timestep
 
+    # TODO what if we saved the results as a crazy dictionary in memory? probs faster.
     def run_reactor_ss(self):
         """
         Run single reactor to steady state
@@ -250,7 +251,7 @@ class MinSBR:
 
         gas_ROP_str = [i + " ROP [kmol/m^3 s]" for i in self.gas.species_names]
 
-        # surface ROP reports gas and surface ROP. these values might be redundant, not sure.
+        # surface ROP reports gas and surface ROP. these values might be redundant, not sure. - yes it is redundant
         gas_surf_ROP_str = [i + " surface ROP [kmol/m^2 s]" for i in self.gas.species_names]
         surf_ROP_str = [i + " ROP [kmol/m^2 s]" for i in self.surf.species_names]
 
@@ -258,6 +259,7 @@ class MinSBR:
         surfrxn_ROP_str = [i + " ROP [kmol/m^2 s]" for i in self.surf.reaction_equations()]
         self.output_filename = (
             self.results_path
+            # TODO update this to something reasonable for multiple temperatures
             + f"/run_number_{self.SLURM_index}_Spinning_basket_area_{self.cat_area_str}_energy_{self.energy}"
             + f"_temp_{self.temperatures}_h2_{self.x_H2_str}_COCO2_{self.x_CO_CO2_str}.csv"
         )
@@ -274,13 +276,13 @@ class MinSBR:
             "T (K)",
             "P (Pa)",
             "V (M^3/s)",
-            "X_co initial",
-            "X_co2initial",
-            "X_h2 initial",
-            "X_h2o initial",
+            "x_CO initial",
+            "x_CO2 initial",
+            "x_H2 initial",
+            "x_H2O initial",
             "CO2/(CO2+CO)",
             "(CO+CO2/H2)",
-            "T (C) final",
+            "T (C) final",  # TODO why is T in Celsius here but in Kelvin above??
             "Rtol",
             "Atol",
             "reactor type",
@@ -288,6 +290,7 @@ class MinSBR:
             "catalyst weight (kg)"
         ]
 
+        # Write out the headers
         writer.writerow(
             preconditions
             + self.gas.species_names
@@ -339,6 +342,71 @@ class MinSBR:
         )
 
         outfile.close()
+
+    def run_reactor_ss_memory(self):
+        """
+        Run single reactor to steady state and save the results to an ordered dictionary in memory
+        """
+
+        # # how to sort out gas and surface such that we can attach units?
+        # gas_ROP_str = [i + " ROP [kmol/m^3 s]" for i in self.gas.species_names]
+
+        # # Okay, this is weird. surf.net_production_rates includes both gas and surface rates, but surf.species_names only has surface species
+        # surf_ROP_str = [i + " ROP [kmol/m^2 s]" for i in self.surf.species_names]
+
+        # gasrxn_ROP_str = [i + " ROP [kmol/m^3 s]" for i in self.gas.reaction_equations()]
+        # surfrxn_ROP_str = [i + " ROP [kmol/m^2 s]" for i in self.surf.reaction_equations()]
+
+        results = {}
+        results['time (s)'] = self.sim.time
+        results['T (K)'] = self.temperature
+        results['P (Pa)'] = self.pressure
+        results['V (m^3/s)'] = self.volume_flow
+        results['x_CO initial'] = self.x_CO
+        results['x_CO2 initial'] = self.x_CO2
+        results['x_H2 initial'] = self.x_H2
+        results['x_H2O initial'] = self.x_H2O
+        results['CO2/(CO2+CO)'] = self.CO2_ratio
+        results['(CO+CO2/H2)'] = self.H2_ratio
+        results['T (C) final'] = self.gas.T  # TODO why is T in Celsius here but in Kelvin above??
+        results['Rtol'] = self.sim.rtol
+        results['Atol'] = self.sim.atol
+        results['reactor type'] = self.reactor_type_str
+        results['energy on?'] = self.energy
+        results['catalyst weight (kg)'] = self.cat_weight
+
+        # run the simulation
+        self.sim.advance_to_steady_state()
+
+        for i in range(0, len(self.gas.X)):
+            results[self.gas.species_names[i]] = self.gas.X[i]
+        for i in range(0, len(self.surf.X)):
+            results[self.surf.species_names[i]] = self.surf.X[i]
+
+        # TODO debug the fact that surf.net_production_rates also includes the gas phase
+        # if len(self.gas.species_names) != len(self.gas.net_production_rates):
+        #     raise ValueError('Gas species production rates do not match self.gas.net_production_rates')
+        # if len(self.surf.species_names) != len(self.surf.net_production_rates):
+        #     raise ValueError('Surface species production rates do not match self.surf.net_production_rates')
+        # if len(self.gas.reaction_equations()) != len(self.gas.net_rates_of_progress):
+        #     raise ValueError('Gas net production rates does not match number of reaction equations')
+        # if len(self.surf.reaction_equations()) != len(self.surf.net_rates_of_progress):
+        #     raise ValueError('Surface net production rates does not match number of reaction equations')
+
+        # Enter the ROP's
+        # for i in range(0, len(self.gas.net_production_rates)):
+        #     results[gas_ROP_str[i]] = self.gas.net_production_rates[i]
+
+        # for i in range(0, len(self.surf.net_production_rates)):
+        #     results[gas_surf_ROP_str[i]] = self.surf.net_production_rates[i]
+
+        # for i in range(0, len(self.surf.net_production_rates)):
+        #     results[surf_ROP_str[i]] = self.surf.net_production_rates[i]
+
+        # for i in range(0, len(self.surf.net_production_rates)):
+        #     results[gasrxn_ROP_str[i]] = self.surf.net_production_rates[i]
+
+        return results
 
 
 def run_sbr_test():
