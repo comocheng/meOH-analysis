@@ -13,11 +13,7 @@
 
 
 import cantera as ct
-import csv
 import math
-import os
-import itertools
-import logging
 
 
 class MinSBR:
@@ -29,12 +25,14 @@ class MinSBR:
         self,
         yaml_file,
         rmg_model_path,
-        temperatures=[528],
-        pressures=[75],
-        volumes=[4.24e-6],
-        H2_fractions=[0.75],
-        CO2_fractions=[0.5],
-        catalyst_weights=[4.24e-3],
+        temperature=528,
+        pressure=75,
+        volume_flow=4.24e-6,  # [m^3/s]
+        x_H2=0.75,  # responsibility is on caller to get these right
+        x_CO2=0.25,
+        x_CO=0,
+        x_H2O=0,
+        catalyst_weight=4.24e-3,
         rtol=1.0e-11,
         atol=1.0e-22,
         sensatol=1e-6,
@@ -67,52 +65,16 @@ class MinSBR:
         timestep = float, step taken for reactor simulation (for transient simulation)
         catalyst_weights = list of float, weight of the catalyst (in kg)
         """
-        # try:
-        #     self.SLURM_index = int(os.getenv("SLURM_ARRAY_TASK_ID"))
-        # except TypeError:
-        #     self.SLURM_index = 0
 
-        self.temperatures = temperatures
-        self.pressures = pressures
-        self.volumes = volumes
-        self.H2_fractions = H2_fractions  # TODO is this inlet H2 or what?
-        self.CO2_fractions = CO2_fractions
-        self.catalyst_weights = catalyst_weights  # [kg]
+        self.temperature = temperature
+        self.pressure = pressure
+        self.volume_flow = volume_flow
+        self.x_H2 = x_H2
+        self.x_CO2 = x_CO2
+        self.x_CO = x_CO
+        self.x_H2O = x_H2O
+        self.catalyst_weight = catalyst_weight  # [kg]
         self.rmg_model_path = rmg_model_path
-
-        # generate settings array. - this goes outside the init
-        self.settings = list(
-            itertools.product(
-                self.temperatures,
-                self.pressures,
-                self.volumes,
-                self.H2_fractions,
-                self.CO2_fractions,
-                self.catalyst_weights,
-            )
-        )
-
-        # TODO get information for which RMG run this is
-
-        # set initial temperatures and pressures
-        self.temperature = self.settings[self.SLURM_index][0]  # kelvin
-        self.temperature_str = str(self.temperature)[0:3]
-        self.pressure = self.settings[self.SLURM_index][1] * ct.one_atm  # Pascals
-
-        # set mole fractions of each species
-        self.x_H2 = self.settings[self.SLURM_index][3]
-        self.x_H2_str = str(self.x_H2)[0:5].replace(".", "_")
-        self.x_CO_CO2_str = str(self.settings[self.SLURM_index][4])[0:5].replace(".", "_")
-
-        # TODO consolidate this into something else
-        # Per Grabow experiments, add in H2O for X=0.75 H2 run
-        if self.x_H2 == 0.75:
-            self.x_H2O = 0.05
-        else:
-            self.x_H2O = 0
-
-        self.x_CO = (1 - (self.x_H2 + self.x_H2O)) * (self.settings[self.SLURM_index][4])
-        self.x_CO2 = (1 - (self.x_H2 + self.x_H2O)) * (1 - self.settings[self.SLURM_index][4])
 
         # molecular weights for mass flow calculations
         MW_CO = 28.01e-3  # [kg/mol]
@@ -166,9 +128,8 @@ class MinSBR:
         self.site_density = (
             self.surf.site_density * 1000
         )  # [mol/m^2]cantera uses kmol/m^2, convert to mol/m^2
-        self.cat_weight = self.settings[self.SLURM_index][5]
         self.cat_site_per_wt = (300 * 1e-6) * 1000  # [mol/kg] 1e-6mol/micromole, 1000g/kg
-        self.cat_area = self.site_density / (self.cat_weight * self.cat_site_per_wt)  # [m^3]
+        self.cat_area = self.site_density / (self.catalyst_weight * self.cat_site_per_wt)  # [m^3]
         self.cat_area_str = "%s" % "%.3g" % self.cat_area
 
         # reactor initialization
@@ -196,10 +157,8 @@ class MinSBR:
         self.surf.coverages = "X(1):1.0"
 
         # flow controllers (Graaf measured flow at 293.15 and 1 atm)
-        one_atm = ct.one_atm
         FC_temp = 293.15
-        self.volume_flow = self.settings[self.SLURM_index][2]  # [m^3/s]
-        self.molar_flow = self.volume_flow * one_atm / (8.3145 * FC_temp)  # [mol/s]
+        self.molar_flow = self.volume_flow * ct.one_atm / (8.3145 * FC_temp)  # [mol/s]
         self.mass_flow = self.molar_flow * (
             self.x_CO * MW_CO + self.x_CO2 * MW_CO2 + self.x_H2 * MW_H2 + self.x_H2O * MW_H2O
         )  # [kg/s]
@@ -257,7 +216,7 @@ class MinSBR:
         results['Atol'] = self.sim.atol
         results['reactor type'] = self.reactor_type_str
         results['energy on?'] = self.energy
-        results['catalyst weight (kg)'] = self.cat_weight
+        results['catalyst weight (kg)'] = self.catalyst_weight
 
         # run the simulation
         self.sim.advance_to_steady_state()
