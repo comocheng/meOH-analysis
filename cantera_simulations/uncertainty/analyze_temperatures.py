@@ -2,7 +2,10 @@ import numpy as np
 import itertools
 from multiprocessing import Pool
 from min_sbr import MinSBR
+import time
 
+
+start = time.time()
 
 # rmg_model_folder = "/home/moon/methanol/perturb_5000/run_0000/"
 rmg_model_folder = "/home/sevy/methanol/perturb_5000/run_0000/"
@@ -10,7 +13,7 @@ rmg_model_folder = "/home/sevy/methanol/perturb_5000/run_0000/"
 cti_file_path = "/home/sevy/methanol/perturb_5000/run_0000/cantera/chem_annotated.cti"
 
 
-temperatures = np.linspace(400.0, 700.0, 20)
+temperatures = np.linspace(400.0, 700.0, 40)
 pressures = [75.0]
 volume_flows = [4.24e-6]
 
@@ -48,9 +51,13 @@ def run_reactor(setting):
     return results
 
 
-with Pool(12) as p:
+# Too much memory? is that why it's slow?
+with Pool(4) as p:
     result = p.map(run_reactor, settings)
 
 # results = run_reactor(settings[0])
 
-print("done")
+end = time.time()
+print(f"Completed {len(settings)} processes in {end-start} seconds")
+
+# completed 40 processes in 309.3567500114441 seconds
