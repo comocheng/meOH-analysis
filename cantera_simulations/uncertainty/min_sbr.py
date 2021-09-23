@@ -12,19 +12,12 @@
 ###############################################
 
 
-import pandas as pd
-import numpy as np
-import time
 import cantera as ct
-from matplotlib import pyplot as plt
 import csv
 import math
 import os
-import sys
-import re
 import itertools
 import logging
-import time
 
 
 class MinSBR:
@@ -44,10 +37,8 @@ class MinSBR:
         catalyst_weights=[4.24e-3],
         rtol=1.0e-11,
         atol=1.0e-22,
-        sensitivity=0,
         sensatol=1e-6,
         sensrtol=1e-6,
-        sensitive_species="CH3OH(8)",
         reactor_type=1,
         energy="off",
         reactime=1e5,
@@ -76,10 +67,10 @@ class MinSBR:
         timestep = float, step taken for reactor simulation (for transient simulation)
         catalyst_weights = list of float, weight of the catalyst (in kg)
         """
-        try:
-            self.SLURM_index = int(os.getenv("SLURM_ARRAY_TASK_ID"))
-        except TypeError:
-            self.SLURM_index = 0
+        # try:
+        #     self.SLURM_index = int(os.getenv("SLURM_ARRAY_TASK_ID"))
+        # except TypeError:
+        #     self.SLURM_index = 0
 
         self.temperatures = temperatures
         self.pressures = pressures
@@ -89,7 +80,7 @@ class MinSBR:
         self.catalyst_weights = catalyst_weights  # [kg]
         self.rmg_model_path = rmg_model_path
 
-        # generate settings array.
+        # generate settings array. - this goes outside the init
         self.settings = list(
             itertools.product(
                 self.temperatures,
@@ -235,113 +226,6 @@ class MinSBR:
         self.timestep = timestep
 
     # TODO what if we saved the results as a crazy dictionary in memory? probs faster.
-    def run_reactor_ss(self):
-        """
-        Run single reactor to steady state
-        """
-        # set paths for saving species pictures, fluxes, and csv files
-
-        # save csv results regardless
-        # TODO create a sensible path
-        self.results_path = os.path.join(self.rmg_model_path, 'steady_state')
-        try:
-            os.makedirs(self.results_path, exist_ok=True)
-        except OSError as error:
-            print(error)
-
-        gas_ROP_str = [i + " ROP [kmol/m^3 s]" for i in self.gas.species_names]
-
-        # surface ROP reports gas and surface ROP. these values might be redundant, not sure. - yes it is redundant
-        gas_surf_ROP_str = [i + " surface ROP [kmol/m^2 s]" for i in self.gas.species_names]
-        surf_ROP_str = [i + " ROP [kmol/m^2 s]" for i in self.surf.species_names]
-
-        gasrxn_ROP_str = [i + " ROP [kmol/m^3 s]" for i in self.gas.reaction_equations()]
-        surfrxn_ROP_str = [i + " ROP [kmol/m^2 s]" for i in self.surf.reaction_equations()]
-        self.output_filename = (
-            self.results_path
-            # TODO update this to something reasonable for multiple temperatures
-            + f"/run_number_{self.SLURM_index}_Spinning_basket_area_{self.cat_area_str}_energy_{self.energy}"
-            + f"_temp_{self.temperatures}_h2_{self.x_H2_str}_COCO2_{self.x_CO_CO2_str}.csv"
-        )
-
-        outfile = open(self.output_filename, "w")
-        writer = csv.writer(outfile)
-
-        # log the filepath so we know where to go if there's a problem
-        logging.warning(self.results_path + self.output_filename)
-
-        # get list  of preconditions for csv writer
-        preconditions = [
-            "time (s)",
-            "T (K)",
-            "P (Pa)",
-            "V (M^3/s)",
-            "x_CO initial",
-            "x_CO2 initial",
-            "x_H2 initial",
-            "x_H2O initial",
-            "CO2/(CO2+CO)",
-            "(CO+CO2/H2)",
-            "T (C) final",  # TODO why is T in Celsius here but in Kelvin above??
-            "Rtol",
-            "Atol",
-            "reactor type",
-            "energy on?"
-            "catalyst weight (kg)"
-        ]
-
-        # Write out the headers
-        writer.writerow(
-            preconditions
-            + self.gas.species_names
-            + self.surf.species_names
-            + gas_ROP_str
-            + gas_surf_ROP_str
-            + surf_ROP_str
-            + gasrxn_ROP_str
-            + surfrxn_ROP_str
-        )
-
-        # run the simulation
-        self.sim.advance_to_steady_state()
-
-        # some models have the special case where they do not have any
-        # gas phase reactions. if this is true, skip over gas ROPs
-        if len(self.gas.reactions()) > 0:
-            gas_net_rates_of_progress = list(self.gas.net_rates_of_progress)
-        else:
-            gas_net_rates_of_progress = []
-
-        precondition_values = [
-            self.sim.time,
-            self.temperature,
-            self.pressure,
-            self.volume_flow,
-            self.x_CO,
-            self.x_CO2,
-            self.x_H2,
-            self.x_H2O,
-            self.CO2_ratio,
-            self.H2_ratio,
-            self.gas.T,
-            self.sim.rtol,
-            self.sim.atol,
-            self.reactor_type_str,
-            self.energy,
-            self.cat_weight,
-        ]
-
-        writer.writerow(
-            precondition_values
-            + list(self.gas.X)
-            + list(self.surf.X)
-            + list(self.gas.net_production_rates)
-            + list(self.surf.net_production_rates)
-            + gas_net_rates_of_progress
-            + list(self.surf.net_rates_of_progress)
-        )
-
-        outfile.close()
 
     def run_reactor_ss_memory(self):
         """
