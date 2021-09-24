@@ -4,10 +4,10 @@ import glob
 import os
 
 
-working_dir = "/scratch/westgroup/methanol/perturb_5000/"
+working_dir = "/scratch/westgroup/methanol/perturb_5000/ct_run_scripts"
 
 print("Collecting SLURM scripts")
-slurm_scripts = glob.glob(os.path.join(working_dir, "rmg_runs_*.sh"))
+slurm_scripts = glob.glob(os.path.join(working_dir, "ct_runs_*.sh"))
 
 
 for i, script in enumerate(slurm_scripts):
