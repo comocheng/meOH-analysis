@@ -1,25 +1,26 @@
 import numpy as np
+import pandas as pd
 import itertools
 from multiprocessing import Pool
 from min_sbr import MinSBR
-import time
+import os
+# import time
 
 
-N_proc = 0
+# start = time.time()
 
-start = time.time()
-
-# rmg_model_folder = "/home/moon/methanol/perturb_5000/run_0000/"
+rmg_model_folder = "/home/moon/methanol/perturb_5000/run_0000/"
 # rmg_model_folder = "/home/sevy/methanol/perturb_5000/run_0000/"
-rmg_model_folder = "/scratch/westgroup/methanol/perturb_5000/run_0000/"
+# rmg_model_folder = "/scratch/westgroup/methanol/perturb_5000/run_0000/"
 
-# cti_file_path = "/home/moon/methanol/perturb_5000/run_0000/cantera/chem_annotated.cti"
+cti_file_path = "/home/moon/methanol/perturb_5000/run_0000/cantera/chem_annotated.cti"
 # cti_file_path = "/home/sevy/methanol/perturb_5000/run_0000/cantera/chem_annotated.cti"
-cti_file_path = "/scratch/westgroup/methanol/perturb_5000/run_0000/cantera/chem_annotated.cti"
+# cti_file_path = "/scratch/westgroup/methanol/perturb_5000/run_0000/cantera/chem_annotated.cti"
 
+csv_path = os.path.join(rmg_model_folder, "ct_analysis.csv")
 
-temperatures = np.linspace(400.0, 700.0, 40)
-pressures = np.linspace(30.0, 75.0, 5)
+temperatures = np.linspace(400.0, 700.0, 20)
+pressures = np.linspace(30.0, 75.0, 1)
 # pressures = [75.0]
 volume_flows = [4.24e-6]
 
@@ -61,9 +62,8 @@ def run_reactor(setting):
 with Pool() as p:
     result = p.map(run_reactor, settings)
 
-# results = run_reactor(settings[0])
+df = pd.DataFrame(result)
+df.to_csv(csv_path)
 
-end = time.time()
-print(f"Completed {len(settings)} processes in {end-start} seconds using {N_proc} workers")
-
-# completed 40 processes in 309.3567500114441 seconds
+# end = time.time()
+# print(f"Completed {len(settings)} processes in {end-start} seconds")
