@@ -44,12 +44,12 @@ for i in range(0, M, N):
     content.append(f'SLURM_TASK_ID_OFFSET={task_id_offset}\n')
     content.append('RUN_i=$(printf "%04.0f" $(($SLURM_ARRAY_TASK_ID + $SLURM_TASK_ID_OFFSET)))\n')
     rmg_run_dir = os.path.join(working_dir, "run_${RUN_i}")
-    content.append(f'CSV_FILE=$({rmg_run_dir} + /cantera/ct_analysis.csv)\n')
-    content.append(f'CT_FILE=$({rmg_run_dir} + /cantera/chem_annotated.cti)\n')
+    content.append(f'CSV_FILE=$({rmg_run_dir}/cantera/ct_analysis.csv)\n')
+    content.append(f'CT_FILE=$({rmg_run_dir}/cantera/chem_annotated.cti)\n')
     
     # skip if csv file already exists
     if skip_completed_runs:
-        content.append('test -f "$CSV_FILE"; then\n')
+        content.append('if test -f "$CSV_FILE"; then\n')
         content.append('echo "skipping completed run ${RUN_i}"; exit 0\n')
         content.append('fi\n\n')
         
