@@ -24,8 +24,9 @@ if not os.path.exists(sys.argv[1]):
 # cti_file_path = "/home/sevy/methanol/perturb_5000/run_0000/cantera/chem_annotated.cti"
 # cti_file_path = "/scratch/westgroup/methanol/perturb_5000/run_0000/cantera/chem_annotated.cti"
 
-cti_file_path = sys.argv[2]
-csv_path = os.path.join(os.path.dirname(cti_file_path), "ct_analysis.csv")
+cti_file_path = sys.argv[1]
+rmg_model_folder = os.path.dirname(cti_file_path)
+csv_path = os.path.join(rmg_model_folder, "ct_analysis.csv")
 
 temperatures = np.linspace(400.0, 700.0, 20)
 pressures = np.linspace(30.0, 75.0, 1)
