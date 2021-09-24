@@ -8,11 +8,11 @@ from min_sbr import MinSBR
 # import time
 
 
-if len(sys.argv < 2):
-    raise ValueError("Incorrect usage. Must path the cantera model file as an argument to this analysis script")
+if len(sys.argv) < 2:
+    raise ValueError("Incorrect usage. Must pass the cantera model file as an argument to this analysis script")
 
-if not os.path.exists(sys.argv[2]):
-    raise OSError(f"Path to the cantera model file does not exist: {sys.argv[2]}")
+if not os.path.exists(sys.argv[1]):
+    raise OSError(f"Path to the cantera model file does not exist: {sys.argv[1]}")
 
 # start = time.time()
 
