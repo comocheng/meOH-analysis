@@ -10,5 +10,5 @@
 #SBATCH --ntasks=1
 
 
-python /scratch/westgroup/methanol/meOH-synthesis/perturbed_runs/run_slurm_scripts.py
+python /scratch/westgroup/methanol/meOH-analysis/cantera_simulations/uncertainty/run_slurm_scripts.py
 
