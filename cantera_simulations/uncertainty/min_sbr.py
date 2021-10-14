@@ -128,8 +128,8 @@ class MinSBR:
         self.site_density = (
             self.surf.site_density * 1000
         )  # [mol/m^2]cantera uses kmol/m^2, convert to mol/m^2
-        self.cat_site_per_wt = (300 * 1e-6) * 1000  # [mol/kg] 1e-6mol/micromole, 1000g/kg
-        self.cat_area = self.site_density / (self.catalyst_weight * self.cat_site_per_wt)  # [m^3]
+        self.cat_site_per_wt = 5*61.67*1e-6*1e3 # [mol/kg] 1e-6mol/micromole, 1000g/kg
+        self.cat_area = (self.cat_weight * self.cat_site_per_wt)/self.site_density  # [m^3]
         self.cat_area_str = "%s" % "%.3g" % self.cat_area
 
         # reactor initialization
