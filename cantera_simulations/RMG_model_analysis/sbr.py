@@ -84,6 +84,7 @@ class sbr:
         fluxes = bool, if true create flux diagrams
         csp = bool, if true saves specially formatted .dat file for csp analysis
         """
+        # originally was skipping first one, start at 0. 
         try:
             self.array_i = int(os.getenv("SLURM_ARRAY_TASK_ID"))
         except TypeError:
@@ -96,8 +97,11 @@ class sbr:
         self.co2_array = co2_array
         self.cat_weight_array = cat_weight_array # [kg]
 
+        self.graaf = graaf
+        self.grabow = grabow
+
         # generate settings array. if using Graaf values, load them from csv
-        if graaf:
+        if self.graaf:
             self.settings = self.load_graaf_data()
             self.graaf_compare = "Graaf_experiment_comparison"
         else: 
@@ -154,7 +158,10 @@ class sbr:
         # set initial temps& pressures
         self.temp = self.settings[self.array_i][0] # kelvin
         self.temp_str = str(self.temp)[0:3]
-        self.pressure =  self.settings[self.array_i][1] * ct.one_atm  # Pascals
+        if self.graaf: 
+            self.pressure =  self.settings[self.array_i][1] * 1e5  # bar to Pascals
+        else: 
+            self.pressure =  self.settings[self.array_i][1] * ct.one_atm # atm to Pascals
 
         # set mole fractions of each species
         self.X_h2 = self.settings[self.array_i][3]
@@ -167,8 +174,8 @@ class sbr:
         else:
             self.X_h2o = 0
 
-        self.X_co = (1 - (self.X_h2 + self.X_h2o)) * (self.settings[self.array_i][4])
-        self.X_co2 = (1 - (self.X_h2 + self.X_h2o)) * (1 - self.settings[self.array_i][4])
+        self.X_co2 = (1 - (self.X_h2 + self.X_h2o)) * (self.settings[self.array_i][4])
+        self.X_co = (1 - (self.X_h2 + self.X_h2o)) * (1 - self.settings[self.array_i][4])
 
         # molecular weights for mass flow calculations
         mw_co = 28.01e-3  # [kg/mol]
@@ -237,8 +244,8 @@ class sbr:
             self.surf.site_density * 1000
         )  # [mol/m^2]cantera uses kmol/m^2, convert to mol/m^2
         self.cat_weight = self.settings[self.array_i][5]
-        self.cat_site_per_wt = (300 * 1e-6) * 1000  # [mol/kg] 1e-6mol/micromole, 1000g/kg
-        self.cat_area = self.site_density / (self.cat_weight * self.cat_site_per_wt)  # [m^3]
+        self.cat_site_per_wt = 5*61.67*1e-6*1e3 # [mol/kg] 1e-6mol/micromole, 1000g/kg
+        self.cat_area = (self.cat_weight * self.cat_site_per_wt)/self.site_density  # [m^3]
         self.cat_area_str = "%s" % "%.3g" % self.cat_area
 
         # reactor initialization
@@ -301,6 +308,11 @@ class sbr:
 
         # set csp analysis
         self.csp = csp
+
+        # load feed and run data if running a graaf sim
+        if self.graaf:
+            self.feed = self.settings[self.array_i][6]
+            self.run = self.settings[self.array_i][7]
    
     def load_graaf_data(self):
         """
@@ -316,7 +328,7 @@ class sbr:
         file_name_feed6a = "../Graaf_data/Feed_6a.xlsx"
         file_name_feed6b = "../Graaf_data/Feed_6b.xlsx"
         file_name_feed7a = "../Graaf_data/Feed_7a.xlsx"
-        file_name_feed7b = "../Graaf_data/Feed_5.xlsx"
+        file_name_feed7b = "../Graaf_data/Feed_7b.xlsx"
 
         df_1 = pd.read_excel(file_name_feed1, engine='openpyxl')
         df_2 = pd.read_excel(file_name_feed2, engine='openpyxl')
@@ -347,10 +359,13 @@ class sbr:
                     row_conditions = [df.iloc[row, df.columns.get_loc('T(K)')], 
                                     df.iloc[row, df.columns.get_loc('p (bar)')], 
                                     df.iloc[row,df.columns.get_loc('10^6 * V (M^3/s)')]*1e-6, # convert from graaf format
-                                    df.iloc[row,df.columns.get_loc('feed Yco2')], 
+                                    df.iloc[row,df.columns.get_loc('feed Yh2')], 
                                     df.iloc[row,df.columns.get_loc('CO2/(CO+CO2)')],
-                                    df.iloc[row,df.columns.get_loc('wcat (g)')]*1e-3] # convert from g to kg
+                                    df.iloc[row,df.columns.get_loc('wcat (g)')]*1e-3, # convert from g to kg
+                                    df.iloc[row,df.columns.get_loc('feed')],  # get feed number
+                                    df.iloc[row,df.columns.get_loc('run')]]  # get run number
                     settings.append(row_conditions)
+
         return settings
 
     def save_pictures(self, git_path="", species_path="", overwrite=False):
@@ -479,12 +494,12 @@ class sbr:
                 phase = phase_object.name
 
                 diagram = ct.ReactionPathDiagram(phase_object, element)
-                diagram.threshold = 1e-5
+                diagram.threshold = 1e-3
                 diagram.title = f"Reaction path diagram following {element} in {phase}"
                 # diagram.label_threshold = 0.0001
 
-                dot_file = f"{suffix}/run_number_{self.array_i}_reaction_path_{element}_{phase}_{timepoint}.dot"
-                img_file = f"{suffix}/run_number_{self.array_i}_reaction_path_{element}_{phase}_{timepoint}.png"
+                dot_file = f"{suffix}/reaction_path_{element}_{phase}_{timepoint}.dot"
+                img_file = f"{suffix}/reaction_path_{element}_{phase}_{timepoint}.png"
                 dot_bin_path = (
                     "/Users/blais.ch/anaconda3/pkgs/graphviz-2.40.1-hefbbd9a_2/bin/dot"
                 )
@@ -567,12 +582,12 @@ class sbr:
         surfrxn_ROP_str = [i + " ROP [kmol/m^2 s]" for i in self.surf.reaction_equations()]
         self.output_filename = (
             self.results_path
-            + f"/run_number_{self.array_i}_Spinning_basket_area_{self.cat_area_str}_energy_{self.energy}"
+            + f"/Spinning_basket_area_{self.cat_area_str}_energy_{self.energy}"
             + f"_temp_{self.temp}_h2_{self.x_h2_str}_COCO2_{self.x_CO_CO2_str}.csv"
         )
         self.output_filename_csp = (
             results_path_csp
-            + f"/run_number_{self.array_i}_CSP_Spinning_basket_area_{self.cat_area_str}_energy_{self.energy}"
+            + f"/CSP_Spinning_basket_area_{self.cat_area_str}_energy_{self.energy}"
             + f"_temp_{self.temp}_h2_{self.x_h2_str}_COCO2_{self.x_CO_CO2_str}.dat"
         )
 
@@ -605,7 +620,7 @@ class sbr:
             "Rtol",
             "Atol",
             "reactor type",
-            "energy on?"
+            "energy on?",
             "catalyst weight (kg)"
             ]
 
@@ -993,11 +1008,18 @@ class sbr:
 
         gasrxn_ROP_str = [i + " ROP [kmol/m^3 s]" for i in self.gas.reaction_equations()]
         surfrxn_ROP_str = [i + " ROP [kmol/m^2 s]" for i in self.surf.reaction_equations()]
-        self.output_filename = (
-            self.results_path
-            + f"/run_number_{self.array_i}_Spinning_basket_area_{self.cat_area_str}_energy_{self.energy}"
-            + f"_temp_{self.temp}_h2_{self.x_h2_str}_COCO2_{self.x_CO_CO2_str}.csv"
-        )
+        if self.graaf: 
+            self.output_filename = (
+                self.results_path
+                + f"/Run_number_{self.array_i}Spinning_basket_area_{self.cat_area_str}_energy_{self.energy}"
+                + f"_temp_{self.temp}_h2_{self.x_h2_str}_COCO2_{self.x_CO_CO2_str}.csv"
+            )
+        else:
+            self.output_filename = (
+                self.results_path
+                + f"/Spinning_basket_area_{self.cat_area_str}_energy_{self.energy}"
+                + f"_temp_{self.temp}_h2_{self.x_h2_str}_COCO2_{self.x_CO_CO2_str}.csv"
+            )
 
         outfile = open(self.output_filename, "w")
         writer = csv.writer(outfile)
@@ -1006,24 +1028,46 @@ class sbr:
         logging.warning(self.results_path+self.output_filename)
                 
         # get list  of preconditions for csv writer
-        preconditions = [
-            "time (s)",
-            "T (K)",
-            "P (Pa)",
-            "V (M^3/s)",
-            "X_co initial",
-            "X_co2initial",
-            "X_h2 initial",
-            "X_h2o initial",
-            "CO2/(CO2+CO)",
-            "(CO+CO2/H2)",
-            "T (C) final",
-            "Rtol",
-            "Atol",
-            "reactor type",
-            "energy on?"
-            "catalyst weight (kg)"
-            ]
+        if self.graaf: 
+            preconditions = [
+                "time (s)",
+                "T (K)",
+                "P (Pa)",
+                "V (M^3/s)",
+                "X_co initial",
+                "X_co2initial",
+                "X_h2 initial",
+                "X_h2o initial",
+                "CO2/(CO2+CO)",
+                "(CO+CO2/H2)",
+                "T (C) final",
+                "Rtol",
+                "Atol",
+                "reactor type",
+                "energy on?",
+                "catalyst weight (kg)",
+                "run",
+                "feed",
+                ]
+        else: 
+            preconditions = [
+                "time (s)",
+                "T (K)",
+                "P (Pa)",
+                "V (M^3/s)",
+                "X_co initial",
+                "X_co2initial",
+                "X_h2 initial",
+                "X_h2o initial",
+                "CO2/(CO2+CO)",
+                "(CO+CO2/H2)",
+                "T (C) final",
+                "Rtol",
+                "Atol",
+                "reactor type",
+                "energy on?",
+                "catalyst weight (kg)",
+                ]
 
         # Sensitivity atol, rtol, and strings for gas and surface reactions if selected
         # slows down script by a lot
@@ -1159,25 +1203,47 @@ class sbr:
             gas_net_rates_of_progress = list(self.gas.net_rates_of_progress)
         else: 
             gas_net_rates_of_progress = []
-            
-        precondition_values = [
-            self.sim.time,
-            self.temp,
-            self.pressure,
-            self.volume_flow,
-            self.X_co,
-            self.X_co2,
-            self.X_h2,
-            self.X_h2o,
-            self.co2_ratio,
-            self.h2_ratio,
-            self.gas.T,
-            self.sim.rtol,
-            self.sim.atol,
-            self.reactor_type_str,
-            self.energy,
-            self.cat_weight,
-        ]
+        
+        if self.graaf: 
+            precondition_values = [
+                self.sim.time,
+                self.temp,
+                self.pressure,
+                self.volume_flow,
+                self.X_co,
+                self.X_co2,
+                self.X_h2,
+                self.X_h2o,
+                self.co2_ratio,
+                self.h2_ratio,
+                self.gas.T,
+                self.sim.rtol,
+                self.sim.atol,
+                self.reactor_type_str,
+                self.energy,
+                self.cat_weight,
+                self.run,
+                self.feed,
+            ]
+        else: 
+            precondition_values = [
+                self.sim.time,
+                self.temp,
+                self.pressure,
+                self.volume_flow,
+                self.X_co,
+                self.X_co2,
+                self.X_h2,
+                self.X_h2o,
+                self.co2_ratio,
+                self.h2_ratio,
+                self.gas.T,
+                self.sim.rtol,
+                self.sim.atol,
+                self.reactor_type_str,
+                self.energy,
+                self.cat_weight,
+            ]
         # if sensitivity, get sensitivity for sensitive 
         # species i (e.g. methanol) in reaction j
         if self.sensitivity == 1: # kinetic sensitivity
