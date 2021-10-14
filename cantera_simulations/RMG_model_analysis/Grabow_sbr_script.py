@@ -38,7 +38,7 @@ atol=1.0e-22
 
 
 # sensitivity settings
-sensitivity = 2 # 1 = kinetic, 2 = thermo, 3 = both, 0 = none
+sensitivity = 1 # 1 = kinetic, 2 = thermo, 3 = both, 0 = none
 sensatol = 1e-5
 sensrtol = 1e-5
 sens_species = ["CH3OH(8)"]
@@ -70,6 +70,8 @@ while not solved:
             reactime=reactime,
             grabow=grabow,
             sens_species=sens_species,
+            fluxes = True,
+            csp = True,
         )
         sbr_ss.run_reactor_ss()
         print('sim completed')

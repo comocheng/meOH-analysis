@@ -13,9 +13,10 @@
 #SBATCH --mail-type=FAIL,END
 
 #an array for the job. usually 107, testing use 2
-#SBATCH --array=1-107
+#SBATCH --array=0-107
 
 
 ####################################################
-source activate rmg_env
+source ~/_02_RMG_envs/RMG_julia_env/.config_file
+source activate rmg_julia_env
 python -u Grabow_sbr_script.py

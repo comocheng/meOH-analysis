@@ -5,15 +5,15 @@
 #SBATCH --time=2:00:00
 #SBATCH --mem=20GB
 #SBATCH --exclude=c5003
-#SBATCH --job-name=grabDeut
-#SBATCH --output=logs/deut_grabow.%a.log
-#SBATCH --error=logs/deut_grabow.%a.slurm.log
+#SBATCH --job-name=graaf
+#SBATCH --output=logs_graaf/graaf.%a.log
+#SBATCH --error=logs_graaf/graaf.%a.slurm.log
 #SBATCH --partition=short
 #SBATCH --mail-user=blais.ch@northeastern.edu 
 #SBATCH --mail-type=FAIL,END
 
 #an array for the job. usually 107, testing use 2
-#SBATCH --array=1-216%30
+#SBATCH --array=0-216
 
 
 ####################################################

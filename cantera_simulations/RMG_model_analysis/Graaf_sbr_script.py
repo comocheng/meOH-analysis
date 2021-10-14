@@ -54,6 +54,8 @@ while not solved:
             grabow=grabow,
             sens_species=sens_species,
             graaf = True,
+            fluxes = True,
+            csp = True,
         )
         sbr_ss.run_reactor_ss()
         print('sim completed')
