@@ -31,7 +31,7 @@ csv_path = os.path.join(rmg_model_folder, "ct_analysis.csv")
 temperatures = np.linspace(400.0, 700.0, 20)
 pressures = np.linspace(30.0, 75.0, 1)
 # pressures = [75.0]
-volume_flows = [4.24e-6]
+volume_flows = [3.32416e-5] # updated to duplicate grabow's space velocity of 7.84e-3 m^3/kg/s
 
 
 # generate settings array
@@ -53,9 +53,9 @@ def run_reactor(setting):
         temperature=setting[0],
         pressure=setting[1],
         volume_flow=setting[2],
-        x_H2=0.75,
+        x_H2=0.5,
         x_CO2=0.25,
-        x_CO=0,
+        x_CO=0.25,
         rtol=1.0e-11,
         atol=1.0e-22,
         reactor_type=1,
