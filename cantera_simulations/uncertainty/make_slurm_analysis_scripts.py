@@ -53,11 +53,13 @@ for i in range(0, M, N):
         content.append('if test -f "$CSV_FILE"; then\n')
         content.append('echo "skipping completed run ${RUN_i}"; exit 0\n')
         content.append('fi\n\n')
+    else: 
+        # run the analysis script
+        content.append('# remove the old CSV file\n')
+        content.append('rm -f $CSV_FILE\n') 
         
     
-    # run the analysis script
-    content.append('# remove the old CSV file\n')
-    content.append('rm -f $CSV_FILE\n') 
+
     content.append('# Run the Cantera analysis\n')    
     content.append(f'python "/scratch/westgroup/methanol/meOH-analysis/cantera_simulations/uncertainty/analyze_temperatures.py" $CT_FILE\n')
     jobfile.content = content
