@@ -10,7 +10,7 @@ import glob
 # WARNING - this will fail if M%N != 0
 
 
-skip_completed_runs = True  # set to false to overwrite RMG runs that completed
+skip_completed_runs = False  # set to false to overwrite RMG runs that completed
 
 working_dir = "/scratch/westgroup/methanol/perturb_5000/"
 # working_dir = "/home/moon/rmg/fake_rmg_runs/"
@@ -56,6 +56,8 @@ for i in range(0, M, N):
         
     
     # run the analysis script
+    content.append('# remove the old CSV file\n')
+    content.append('rm -f $CSV_FILE\n') 
     content.append('# Run the Cantera analysis\n')    
     content.append(f'python "/scratch/westgroup/methanol/meOH-analysis/cantera_simulations/uncertainty/analyze_temperatures.py" $CT_FILE\n')
     jobfile.content = content
