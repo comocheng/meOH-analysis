@@ -27,10 +27,10 @@ class MinSBR:
         rmg_model_path,
         temperature=528,
         pressure=75,
-        volume_flow=4.24e-6,  # [m^3/s]
-        x_H2=0.75,  # responsibility is on caller to get these right
+        volume_flow=3.32416e-5,  # [m^3/s]
+        x_H2=0.50,  # responsibility is on caller to get these right
         x_CO2=0.25,
-        x_CO=0,
+        x_CO=0.25,
         x_H2O=0,
         catalyst_weight=4.24e-3,
         rtol=1.0e-11,
@@ -41,6 +41,8 @@ class MinSBR:
         energy="off",
         reactime=1e5,
         timestep=0.1,
+        meoh_tof=0,
+        h2o_tof=0,
     ):
         """
         initialize sbr object
@@ -67,7 +69,7 @@ class MinSBR:
         """
 
         self.temperature = temperature
-        self.pressure = pressure
+        self.pressure = pressure* ct.one_atm # cantera input is in pascals, so convert
         self.volume_flow = volume_flow
         self.x_H2 = x_H2
         self.x_CO2 = x_CO2
@@ -75,6 +77,10 @@ class MinSBR:
         self.x_H2O = x_H2O
         self.catalyst_weight = catalyst_weight  # [kg]
         self.rmg_model_path = rmg_model_path
+        
+        # load the experimental TOFs
+        self.graaf_meoh_tof = meoh_tof
+        self.graaf_h2o_tof = h2o_tof
 
         # molecular weights for mass flow calculations
         MW_CO = 28.01e-3  # [kg/mol]
@@ -129,7 +135,7 @@ class MinSBR:
             self.surf.site_density * 1000
         )  # [mol/m^2]cantera uses kmol/m^2, convert to mol/m^2
         self.cat_site_per_wt = 5*61.67*1e-6*1e3 # [mol/kg] 1e-6mol/micromole, 1000g/kg
-        self.cat_area = (self.cat_weight * self.cat_site_per_wt)/self.site_density  # [m^3]
+        self.cat_area = (self.catalyst_weight * self.cat_site_per_wt)/self.site_density  # [m^3]
         self.cat_area_str = "%s" % "%.3g" % self.cat_area
 
         # reactor initialization
@@ -200,10 +206,13 @@ class MinSBR:
         # gasrxn_ROP_str = [i + " ROP [kmol/m^3 s]" for i in self.gas.reaction_equations()]
         # surfrxn_ROP_str = [i + " ROP [kmol/m^2 s]" for i in self.surf.reaction_equations()]
 
+        # run the simulation
+        self.sim.advance_to_steady_state()
+
         results = {}
         results['time (s)'] = self.sim.time
         results['T (K)'] = self.temperature
-        results['P (Pa)'] = self.pressure
+        results['P (Pa)'] = self.gas.P
         results['V (m^3/s)'] = self.volume_flow
         results['x_CO initial'] = self.x_CO
         results['x_CO2 initial'] = self.x_CO2
@@ -211,20 +220,24 @@ class MinSBR:
         results['x_H2O initial'] = self.x_H2O
         results['CO2/(CO2+CO)'] = self.CO2_ratio
         results['(CO+CO2/H2)'] = self.H2_ratio
-        results['T (C) final'] = self.gas.T  # TODO why is T in Celsius here but in Kelvin above??
+        results['T (K) final'] = self.gas.T
         results['Rtol'] = self.sim.rtol
         results['Atol'] = self.sim.atol
         results['reactor type'] = self.reactor_type_str
         results['energy on?'] = self.energy
         results['catalyst weight (kg)'] = self.catalyst_weight
-
-        # run the simulation
-        self.sim.advance_to_steady_state()
-
+        results['graaf MeOH TOF 1/s'] = self.graaf_meoh_tof 
+        results['graaf H2O TOF 1/s'] = self.graaf_h2o_tof
+        results['RMG MeOH TOF 1/s'] = self.surf.net_production_rates[self.gas.species_index("CH3OH(8)")]/self.surf.site_density
+        results['RMG H2O TOF 1/s'] = self.surf.net_production_rates[self.gas.species_index("H2O(5)")]/self.surf.site_density
+        results['error squared MeOH TOF'] = (results['graaf MeOH TOF 1/s'] - results['RMG MeOH TOF 1/s'])**2
+        results['error squared H2O TOF'] = (results['graaf H2O TOF 1/s'] - results['RMG H2O TOF 1/s'])**2
+        
         for i in range(0, len(self.gas.X)):
             results[self.gas.species_names[i]] = self.gas.X[i]
         for i in range(0, len(self.surf.X)):
             results[self.surf.species_names[i]] = self.surf.X[i]
+        
 
         # TODO debug the fact that surf.net_production_rates also includes the gas phase
         # if len(self.gas.species_names) != len(self.gas.net_production_rates):
@@ -250,7 +263,6 @@ class MinSBR:
         #     results[gasrxn_ROP_str[i]] = self.surf.net_production_rates[i]
 
         return results
-
 
 def run_sbr_test():
     """
