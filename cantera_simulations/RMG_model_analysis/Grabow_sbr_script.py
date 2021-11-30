@@ -18,7 +18,8 @@ Temps = [400, 500, 600]
 # pressure and volume flow are used in Graaf, but to limit 
 # the number of runs we will use the ones used for the plots
 Pressures = [75]
-volume_flows = [0.00424]
+# volume_flows = [0.00424]
+volume_flows = [3.324e-5] # from grabow data, space velocity of 7
 
 # H2 mole fraction
 H2_fraction = [0.8, 0.5, 0.95, 0.75]
