@@ -13,19 +13,21 @@ else:
     cti_file = rmg_model_folder  + "base/cantera/chem_annotated.cti"
 
 # Reactor settings arrays for run
-Temps = [400, 500, 600]
+Temps = [400, 500, 528, 600]
 
 # pressure and volume flow are used in Graaf, but to limit 
 # the number of runs we will use the ones used for the plots
 Pressures = [75]
 # volume_flows = [0.00424]
-volume_flows = [3.324e-5] # from grabow data, space velocity of 7
+volume_flows = [7.84e-06] # from grabow CO2/CO ratio study
 
 # H2 mole fraction
-H2_fraction = [0.8, 0.5, 0.95, 0.75]
+H2_fraction = [0.5, 0.8, 0.75, 0.95]
 
 # CO2/(CO+CO2)
-CO_CO2_ratio = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+step = 0.05
+CO_CO2_ratio = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+# CO_CO2_ratio = np.arange(0,1.0+step, step)
 
 
 energy = "off"
@@ -34,16 +36,19 @@ energy = "off"
 reactime = 1e4 # time to run reactor, not residence time
 reactor_type = 1 # ideal gas reactor
 energy = "off"
-rtol=1.0e-11
-atol=1.0e-22
+
+# rtol=1.0e-11
+# atol=1.0e-22
+rtol=1.0e-13
+atol=1.0e-24
 
 
 # sensitivity settings
-sensitivity = 1 # 1 = kinetic, 2 = thermo, 3 = both, 0 = none
-sensatol = 1e-5
-sensrtol = 1e-5
-sens_species = ["CH3OH(8)"]
-
+sensitivity = 0 # 1 = kinetic, 2 = thermo, 3 = both, 0 = none
+sensatol = 1e-6
+sensrtol = 1e-6
+# sens_species = ["H2O(5)", "CH3OH(8)", "CO(3)", "CO2(4)", "H2(2)"]
+sens_species = ["H2O(5)"]
 # use grabow model
 grabow = False
 

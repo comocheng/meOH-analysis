@@ -10,3 +10,5 @@
 *.ipynb_checkpoints*
 *.dat
 *__pycache__*
+*.mat
+*cantera_simulations/RMG_model_analysis/20*

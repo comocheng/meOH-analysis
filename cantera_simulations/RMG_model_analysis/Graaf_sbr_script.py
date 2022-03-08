@@ -24,7 +24,7 @@ atol=1.0e-22
 
 
 # sensitivity settings
-sensitivity = 1 # 1 = kinetic, 2 = thermo, 3 = both, 0 = none
+sensitivity = 0 # 1 = kinetic, 2 = thermo, 3 = both, 0 = none
 sensatol = 1e-5
 sensrtol = 1e-5
 sens_species = ["CH3OH(8)"]

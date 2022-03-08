@@ -288,7 +288,25 @@ class sbr:
         # needing to use a large value for 'K', which can introduce undesired stiffness.
         self.outlet_mfc = ct.PressureController(self.r, self.exhaust, master=self.mfc, K=0.01)
 
-
+        # turn off all reactions containing species x
+        for spec in self.surf.species_names:
+            if spec.startswith("H2*(") or spec.startswith("H2X("):
+                off_species = spec
+        for index,rxn in enumerate(self.surf.reactions()):
+            if off_species in rxn.equation:
+                self.surf.set_multiplier(0,index)
+                
+        # Turn off a specific reaction
+        rxn_strings  = [
+#             'CO*(14) + O*(11) <=> CO2*(15) + X(1)',
+#             'CO2*(15) + HCO*(16) <=> CO*(14) + HCOO*(17)',
+#             'CO2(4) + 2 X(1) <=> CO*(14) + O*(11)',
+        ]
+        for rxn_string in rxn_strings:
+            rxn_index = self.surf.reaction_equations().index(rxn_string)
+            self.surf.set_multiplier(0, rxn_index)
+        
+        
         # initialize reactor network
         self.sim = ct.ReactorNet([self.r])
 
@@ -573,8 +591,8 @@ class sbr:
         
         gas_ROP_str = [i + " ROP [kmol/m^3 s]" for i in self.gas.species_names]
 
-        # surface ROP reports gas and surface ROP. these values might be redundant, not sure.
-
+        # surface ROP reports gas and surface ROP.
+        
         gas_surf_ROP_str = [i + " surface ROP [kmol/m^2 s]" for i in self.gas.species_names]
         surf_ROP_str = [i + " ROP [kmol/m^2 s]" for i in self.surf.species_names]
 
@@ -621,7 +639,9 @@ class sbr:
             "Atol",
             "reactor type",
             "energy on?",
-            "catalyst weight (kg)"
+            "catalyst weight (kg)",
+#             "Outlet P (Pa)",
+            "Outlet V (m^3)",
             ]
 
         # Sensitivity atol, rtol, and strings for gas and surface reactions if selected
@@ -811,6 +831,8 @@ class sbr:
                 self.reactor_type_str,
                 self.energy,
                 self.cat_weight,
+#                 self.gas.P,
+                self.r.volume,
             ]
             # if sensitivity, get sensitivity for sensitive 
             # species i (e.g. methanol) in reaction j
@@ -1046,6 +1068,8 @@ class sbr:
                 "reactor type",
                 "energy on?",
                 "catalyst weight (kg)",
+#                 "Outlet P (Pa)",
+                "Outlet V (m^3)",
                 "run",
                 "feed",
                 ]
@@ -1067,6 +1091,8 @@ class sbr:
                 "reactor type",
                 "energy on?",
                 "catalyst weight (kg)",
+#                 "Outlet P (Pa)",
+                "Outlet V (m^3)",
                 ]
 
         # Sensitivity atol, rtol, and strings for gas and surface reactions if selected
@@ -1222,6 +1248,8 @@ class sbr:
                 self.reactor_type_str,
                 self.energy,
                 self.cat_weight,
+#                 self.gas.P,
+                self.r.volume,
                 self.run,
                 self.feed,
             ]
@@ -1243,6 +1271,8 @@ class sbr:
                 self.reactor_type_str,
                 self.energy,
                 self.cat_weight,
+#                 self.gas.P,
+                self.r.volume,
             ]
         # if sensitivity, get sensitivity for sensitive 
         # species i (e.g. methanol) in reaction j

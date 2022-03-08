@@ -1,0 +1,374 @@
+generator: cti2yaml
+cantera-version: 2.6.0a3
+date: Mon, 18 Oct 2021 23:03:44 -0400
+input-files: [mech_grabow_new.cti]
+
+units: {length: cm, quantity: mol, activation-energy: kcal/mol}
+
+elements:
+- symbol: X
+  atomic-weight: 63.546
+
+phases:
+- name: gas
+  thermo: ideal-gas
+  elements: [H, C, O, X]
+  species: [CH2O, CH3OH, CO, CO2, H2, H2O, HCOOCH3, HCOOH]
+  state:
+    T: 300.0
+    P: 1.01325e+05
+- name: surface1
+  thermo: ideal-surface
+  elements: [H, C, O, X]
+  species: [CH2OHX, CH2OX, CH3O2X, CH3OHX, CH3OX, CO2X, CO3X, COHX, COOHX,
+    COX, H2CO2X, CH2OOCH3X, H2OX, HCO3X, HCOHX, HCOOCH3X, HCOOHX, HCOOX,
+    HCOX, HX, OHX, OX, X]
+  kinetics: surface
+  reactions: all
+  state:
+    T: 300.0
+    P: 1.01325e+05
+  site-density: 2.9e-09
+
+species:
+- name: H2
+  composition: {H: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [29.91936, -2.35028, 1.54743, 0.57934, -0.02578, -3041.82, 171.35]
+- name: CO
+  composition: {C: 1, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [27.01916, 0.39882, 10.80028, -5.39747, 0.11318, -5.70228e+04, 234.83]
+- name: CO2
+  composition: {C: 1, O: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [27.72336, 48.60556, -28.93575, 6.74397, -0.1828, -9.932119e+04, 237.82]
+- name: H2O
+  composition: {H: 2, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [28.05552, 14.46211, -2.99413, 1.07386, 0.12203, -4.523798e+04, 219.56]
+- name: CH2O
+  composition: {C: 1, H: 2, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [3.04758, 101.92105, -56.26415, 12.54532, 0.6224, -6.010085e+04, 198.06]
+- name: HCOOH
+  composition: {C: 1, H: 2, O: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [15.84489, 143.98941, -105.96425, 31.14424, -0.14154, -1.0235533e+05,
+      231.37]
+- name: CH3OH
+  composition: {C: 1, H: 4, O: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [10.49452, 153.59317, -92.85784, 24.06304, 0.19502, -6.324314e+04,
+      213.77]
+- name: HCOOCH3
+  composition: {C: 2, H: 4, O: 2}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [0.11567, 266.94426, -176.86514, 47.09685, 0.3875, -1.2036501e+05,
+      220.88]
+- name: X
+  composition: {X: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+- name: HX
+  composition: {H: 1, X: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [11.33569, 12.63472, 5.60683, -6.9369, -0.91838, -1538.85281, 6.38]
+- name: OX
+  composition: {O: 1, X: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [18.66427, 18.08991, -19.15144, 7.00167, -0.29627, -4.212891229e+04,
+      30.16]
+- name: OHX
+  composition: {O: 1, H: 1, X: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [31.163, 30.48403, -33.39338, 13.81303, -0.28834, -4.372494675e+04,
+      59.14]
+- name: H2OX
+  composition: {H: 2, O: 1, X: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [31.50218, 55.98915, -49.17565, 18.6434, 0.21065, -4.525322508e+04,
+      97.21]
+- name: COX
+  composition: {C: 1, O: 1, X: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [26.01212, 44.22368, -36.26171, 11.65813, 0.28361, -5.711139862e+04,
+      74.24]
+- name: CO2X
+  composition: {C: 1, O: 2, X: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [34.89269, 65.4294, -47.83766, 13.94892, -0.1201, -9.932569152e+04,
+      91.88]
+- name: CO3X
+  composition: {C: 1, O: 3, X: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [50.45768, 93.33982, -69.45108, 18.73342, -0.94381, -1.4144642048e+05,
+      102.79]
+- name: HCO3X
+  composition: {H: 1, C: 1, O: 3, X: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [32.21331, 168.52782, -133.556, 39.90279, -0.45121, -1.4307066652e+05,
+      71.09]
+- name: HCOX
+  composition: {H: 1, C: 1, O: 1, X: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [30.4659, 63.3043, -39.70797, 9.89931, -0.1573, -5.856297355e+04,
+      76.21]
+- name: COHX
+  composition: {C: 1, O: 1, H: 1, X: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [33.92065, 66.00744, -52.46305, 16.4518, -0.29905, -5.851993577e+04,
+      84.88]
+- name: HCOHX
+  composition: {H: 2, C: 1, O: 1, X: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [35.92435, 80.14183, -42.57043, 8.66872, -0.46508, -6.008162377e+04,
+      84.67]
+- name: HCOOX
+  composition: {H: 1, C: 1, O: 2, X: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [20.21109, 133.71969, -96.20544, 26.52968, 7.99e-03, -1.0088259268e+05,
+      50.99]
+- name: H2CO2X
+  composition: {H: 2, C: 1, O: 2, X: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [19.60526, 171.60968, -124.5511, 35.33535, -0.36767, -1.0232212536e+05,
+      45.83]
+- name: COOHX
+  composition: {C: 1, O: 2, H: 1, X: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [42.03276, 86.90417, -57.97981, 14.6808, -0.652, -1.0079940198e+05,
+      88.57]
+- name: HCOOHX
+  composition: {H: 2, C: 1, O: 2, X: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [22.89629, 154.92162, -106.80911, 29.30562, -0.05589, -1.0238395741e+05,
+      67.32]
+- name: CH2OX
+  composition: {C: 1, H: 2, O: 1, X: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [33.94654, 78.52549, -39.69646, 7.53698, -0.50265, -6.012230973e+04,
+      77.01]
+- name: CH3OX
+  composition: {C: 1, H: 3, O: 1, X: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [9.97873, 156.88807, -98.16564, 25.16016, 0.29932, -6.17293778e+04,
+      39.8]
+- name: CH2OHX
+  composition: {C: 1, H: 3, O: 1, X: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [40.12136, 94.7566, -47.33624, 9.31632, -0.79088, -6.164994548e+04,
+      88.21]
+- name: CH3O2X
+  composition: {C: 1, H: 3, O: 2, X: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [20.12942, 198.83174, -142.56348, 40.85552, -0.26263, -1.0389252228e+05,
+      45.13]
+- name: CH3OHX
+  composition: {C: 1, H: 4, O: 1, X: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [12.80521, 181.34809, -115.33416, 30.76361, 0.30468, -6.325783803e+04,
+      60.76]
+- name: HCOOCH3X
+  composition: {H: 4, C: 2, O: 2, X: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [9.96557, 278.66296, -184.88579, 49.1171, 0.37995, -1.2036666345e+05,
+      68.24]
+- name: CH2OOCH3X
+  composition: {C: 2, H: 5, O: 2, X: 1}
+  thermo:
+    model: Shomate
+    temperature-ranges: [200.0, 1000.0]
+    data:
+    - [0.49307, 332.6406, -222.49264, 59.49041, 0.40746, -1.2188709554e+05,
+      40.49]
+
+reactions:
+- equation: CO2 + X <=> CO2X  # Reaction 1
+  sticking-coefficient: {A: 1.0, b: 0.0, Ea: 0.0}
+- equation: H2 + 2 X <=> 2 HX  # Reaction 2
+  sticking-coefficient: {A: 1.0, b: 0.0, Ea: 0.0}
+- equation: CO + X <=> COX  # Reaction 3
+  sticking-coefficient: {A: 1.0, b: 0.0, Ea: 0.0}
+- equation: H2O + X <=> H2OX  # Reaction 4
+  sticking-coefficient: {A: 1.0, b: 0.0, Ea: 0.0}
+- equation: HCOOH + X <=> HCOOHX  # Reaction 5
+  sticking-coefficient: {A: 1.0, b: 0.0, Ea: 0.0}
+- equation: CH2O + X <=> CH2OX  # Reaction 6
+  sticking-coefficient: {A: 1.0, b: 0.0, Ea: 0.0}
+- equation: CH3OH + X <=> CH3OHX  # Reaction 7
+  sticking-coefficient: {A: 1.0, b: 0.0, Ea: 0.0}
+- equation: HCOOCH3 + X <=> HCOOCH3X  # Reaction 8
+  sticking-coefficient: {A: 1.0, b: 0.0, Ea: 0.0}
+- equation: COX + OX <=> CO2X + X  # Reaction 9
+  rate-constant: {A: 4.1206896551724136e+16, b: 0.0, Ea: 14.989338312389998}
+- equation: COX + OHX <=> COOHX + X  # Reaction 10
+  rate-constant: {A: 1.6093103448275862e+16, b: 0.0, Ea: 12.913891469135999}
+- equation: COOHX + X <=> CO2X + HX  # Reaction 11
+  rate-constant: {A: 8.020689655172413e+17, b: 0.0, Ea: 28.364440191137998}
+- equation: COOHX + OHX <=> CO2X + H2OX  # Reaction 12
+  rate-constant: {A: 3.448275862068966e+17, b: 0.0, Ea: 0.0}
+- equation: COOHX + HX <=> HCOOHX + X  # Reaction 13
+  rate-constant: {A: 2.342413793103448e+18, b: 0.0, Ea: 16.834179950838}
+- equation: H2OX + X <=> OHX + HX  # Reaction 14
+  rate-constant: {A: 4.951724137931034e+15, b: 0.0, Ea: 32.05412346803399}
+- equation: OHX + X <=> OX + HX  # Reaction 15
+  rate-constant: {A: 7.562068965517242e+17, b: 0.0, Ea: 38.74167440740799}
+- equation: 2 OHX <=> H2OX + OX  # Reaction 16
+  rate-constant: {A: 5.7758620689655176e+16, b: 0.0, Ea: 14.066917493165999}
+- equation: CO2X + HX <=> HCOOX + X  # Reaction 17
+  rate-constant: {A: 1.2613793103448276e+18, b: 0.0, Ea: 20.062652818121997}
+- equation: HCOOX + HX <=> H2CO2X + X  # Reaction 18
+  rate-constant: {A: 1.2886206896551724e+18, b: 0.0, Ea: 36.666227564154}
+- equation: HCOOX + HX <=> HCOOHX + X  # Reaction 19
+  rate-constant: {A: 4.4896551724137933e+18, b: 0.0, Ea: 20.985073637345998}
+- equation: HCOOHX + HX <=> CH3O2X + X  # Reaction 20
+  rate-constant: {A: 2.153103448275862e+19, b: 0.0, Ea: 23.982941299824}
+- equation: H2CO2X + HX <=> CH3O2X + X  # Reaction 21
+  rate-constant: {A: 7.289655172413794e+16, b: 0.0, Ea: 17.064785155644}
+- equation: H2CO2X + X <=> CH2OX + OX  # Reaction 22
+  rate-constant: {A: 3.448275862068966e+17, b: 0.0, Ea: 20.985073637345998}
+- equation: CH3O2X + X <=> CH2OX + OHX  # Reaction 23
+  rate-constant: {A: 3.448275862068966e+17, b: 0.0, Ea: 17.064785155644}
+- equation: CH2OX + HX <=> CH3OX + X  # Reaction 24
+  rate-constant: {A: 6.258620689655172e+17, b: 0.0, Ea: 5.534524915343999}
+- equation: CH3OX + HX <=> CH3OHX + X  # Reaction 25
+  rate-constant: {A: 4.413793103448276e+17, b: 0.0, Ea: 26.980808962301996}
+- equation: COX + HX <=> HCOX + X  # Reaction 26
+  rate-constant: {A: 3.186206896551724e+17, b: 0.0, Ea: 22.829915275793997}
+- equation: COX + HX <=> COHX + X  # Reaction 27
+  rate-constant: {A: 3.8551724137931034e+17, b: 0.0, Ea: 52.11677628615599}
+- equation: HCOOX + X <=> HCOX + OX  # Reaction 28
+  rate-constant: {A: 8.862068965517242e+16, b: 0.0, Ea: 54.42282833421599}
+- equation: HCOX + HX <=> HCOHX + X  # Reaction 29
+  rate-constant: {A: 3.093448275862069e+17, b: 0.0, Ea: 20.985073637345998}
+- equation: HCOX + HX <=> CH2OX + X  # Reaction 30
+  rate-constant: {A: 1.960344827586207e+17, b: 0.0, Ea: 10.838444625881998}
+- equation: CH2OX + HX <=> CH2OHX + X  # Reaction 31
+  rate-constant: {A: 3.2820689655172415e+19, b: 0.0, Ea: 18.909626794091995}
+- equation: HCOHX + HX <=> CH2OHX + X  # Reaction 32
+  rate-constant: {A: 1.2751724137931035e+17, b: 0.0, Ea: 10.838444625881998}
+- equation: CH2OHX + HX <=> CH3OHX + X  # Reaction 33
+  rate-constant: {A: 2.823793103448276e+17, b: 0.0, Ea: 11.760865445105999}
+- equation: HCOOHX + X <=> HCOX + OHX  # Reaction 34
+  rate-constant: {A: 1.8075862068965517e+17, b: 0.0, Ea: 37.58864838337799}
+- equation: HCOOHX + X <=> HCOHX + OX  # Reaction 35
+  rate-constant: {A: 1.6648275862068966e+16, b: 0.0, Ea: 57.65130120149999}
+- equation: CH3O2X + X <=> CH2OHX + OX  # Reaction 36
+  rate-constant: {A: 1.8913793103448276e+18, b: 0.0, Ea: 46.35164616600599}
+- equation: CO2X + OX <=> CO3X + X  # Reaction 37
+  rate-constant: {A: 3.0696551724137932e+16, b: 0.0, Ea: 7.840576963404}
+- equation: CO3X + HX <=> HCO3X + X  # Reaction 38
+  rate-constant: {A: 5.920689655172413e+17, b: 0.0, Ea: 23.060520480599997}
+- equation: OX + HCOX <=> OHX + COX  # Reaction 39
+  rate-constant: {A: 3.448275862068966e+17, b: 0.0, Ea: 0.0}
+- equation: OHX + HCOX <=> H2OX + COX  # Reaction 40
+  rate-constant: {A: 3.309310344827586e+17, b: 0.0, Ea: 6.918156144179999}
+- equation: HCOOX + HCOX <=> HCOOHX + COX  # Reaction 41
+  rate-constant: {A: 7.586206896551724e+18, b: 0.0, Ea: 13.836312288359998}
+- equation: HCOOX + HCOX <=> H2CO2X + COX  # Reaction 42
+  rate-constant: {A: 1.186551724137931e+17, b: 0.0, Ea: 18.448416384479998}
+- equation: HCOOHX + HCOX <=> CH3O2X + COX  # Reaction 43
+  rate-constant: {A: 1.8413793103448276e+16, b: 0.0, Ea: 9.685418601851998}
+- equation: CH2OX + HCOX <=> CH3OX + COX  # Reaction 44
+  rate-constant: {A: 3.448275862068966e+17, b: 0.0, Ea: 0.0}
+- equation: CH3OX + HCOX <=> CH3OHX + COX  # Reaction 45
+  rate-constant: {A: 6.668965517241379e+16, b: 0.0, Ea: 8.762997782627998}
+- equation: CH3OX + HCOOX <=> HCOOCH3X + OX  # Reaction 46
+  rate-constant: {A: 2.391034482758621e+16, b: 0.0, Ea: 28.595045395944}
+- equation: CH3OX + CH2OX <=> CH2OOCH3X + X  # Reaction 47
+  rate-constant: {A: 2.2086206896551724e+18, b: 0.0, Ea: 2.997867662478}
+- equation: HCOOCH3X + HX <=> CH2OOCH3X + X  # Reaction 48
+  rate-constant: {A: 5.296551724137931e+16, b: 0.0, Ea: 21.676889251763996}
+- equation: 2 CH2OX <=> HCOOCH3X + X  # Reaction 49
+  rate-constant: {A: 8.713793103448276e+18, b: 0.0, Ea: 25.597177733466}
