@@ -1,0 +1,215 @@
+SITE   SDEN/2.9430E-09/ ! mol/cm^2
+    COX                 ! CO* 
+    CO2X                ! CO2* 
+    HX                  ! H* 
+    H2OX                ! H2O* 
+    CH4OX               ! CH3OH* 
+    OX                  ! O* 
+    HOX                 ! OH* 
+    CHOX                ! HCO* 
+    CHO2X2/2/           ! HCOO** 
+    CH2O2X2/2/          ! H2CO2* 
+    CHO2X               ! COOH* 
+    CH2OX               ! CH2O* 
+    CH3OX               ! CH3O* 
+    CH3O2X              ! CH3O2* 
+    *                   ! *
+END
+
+
+
+THERM ALL
+    300.000  1000.000  5000.000
+
+! Thermo library: surfaceThermoPt111 Binding energy corrected by LSR (0.50C) from Pt111
+COX                     C   1O   1X   1     G   298.000  1500.000  486.62      1
+ 3.35138332E+00 4.67001957E-03-3.62330425E-06 1.31276690E-09-1.72906097E-13    2
+-2.26477618E+04-1.57020371E+01 1.44913041E+00 2.03094628E-02-5.18409020E-05    3
+ 6.73832248E-08-3.41229481E-11-2.24626624E+04-7.89526895E+00                   4
+
+! Thermo library: surfaceThermoPt111 Binding energy corrected by LSR () from Pt111
+CO2X                    C   1O   2X   1     G   298.000  1500.000  487.59      1
+ 3.17135598E+00 8.14879229E-03-6.31558310E-06 2.38479192E-09-3.45611038E-13    2
+-4.90469766E+04-6.21580285E+00 1.22176674E+00 2.41609266E-02-5.56313764E-05    3
+ 6.98903810E-08-3.49972782E-11-4.88570759E+04 1.78723666E+00                   4
+
+! Thermo library: surfaceThermoPt111 Binding energy corrected by LSR (1.00H) from Pt111
+HX                      H   1X   1          G   298.000  1500.000  732.65      1
+-5.49913208E-01 9.36640580E-03-1.03764792E-05 5.29724441E-09-1.01933717E-12    2
+-3.24662252E+03 1.21727925E+00-1.44924217E+00 1.29030489E-02-1.48054662E-05    3
+ 6.76875466E-09-6.48384038E-13-3.07798485E+03 5.52779909E+00                   4
+
+! Thermo library: surfaceThermoPt111 Binding energy corrected by LSR () from Pt111
+H2OX                    H   2O   1X   1     G   298.000  1500.000  583.06      1
+ 3.45959842E+00 4.09949163E-03-2.85191806E-06 1.44818634E-09-3.03272486E-13    2
+-3.23596584E+04-9.45292772E+00 1.99895524E+00 1.41202920E-02-2.86324546E-05    3
+ 3.09262515E-08-1.29429870E-11-3.21893344E+04-3.19417361E+00                   4
+
+! Thermo library: surfaceThermoPt111 Binding energy corrected by LSR () from Pt111
+CH4OX                   C   1H   4O   1X   1G   298.000  1500.000  709.23      1
+ 8.40627900E-01 2.10094314E-02-1.38614954E-05 4.89204891E-09-7.09687427E-13    2
+-2.82773734E+04 3.80400776E+00 2.50137116E+00 1.16437963E-02 5.94479917E-06    3
+-1.37239657E-08 5.85178722E-12-2.85129639E+04-3.63767383E+00                   4
+
+! Thermo library: surfaceThermoPt111 Binding energy corrected by LSR (1.00O) from Pt111
+OX                      O   1X   1          G   298.000  1500.000  652.87      1
+ 1.70999516E+00 3.77910848E-03-4.51212831E-06 2.44991335E-09-5.00353252E-13    2
+-2.71500298E+04-9.04320150E+00-5.52252385E-02 1.45938886E-02-2.93587711E-05    3
+ 2.78207752E-08-1.02151561E-11-2.69195302E+04-1.27962424E+00                   4
+
+! Thermo library: surfaceThermoPt111 Binding energy corrected by LSR (0.50O) from Pt111
+HOX                     H   1O   1X   1     G   298.000  1500.000  646.19      1
+ 3.28664397E+00 4.64873773E-03-5.37344191E-06 3.14722098E-09-6.85010919E-13    2
+-3.26108111E+04-1.55257527E+01 6.31405027E-01 2.10845143E-02-4.35246342E-05    3
+ 4.25061690E-08-1.59118626E-11-3.22676430E+04-3.87512048E+00                   4
+
+! Thermo library: surfaceThermoPt111 Binding energy corrected by LSR (0.25C) from Pt111
+CHOX                    C   1H   1O   1X   1G   298.000  1500.000  492.53      1
+ 2.36474596E+00 1.05819452E-02-8.10076700E-06 3.14861458E-09-4.89865334E-13    2
+-1.00802008E+04-7.84318720E+00 9.29782297E-01 2.22422689E-02-4.36320948E-05    3
+ 5.12690572E-08-2.49286114E-11-9.93892717E+03-1.93735930E+00                   4
+
+! Gas phase thermo for [O]C=O from Thermo group additivity estimation: group(O2s-(Cds-O2d)H) + group(Cds-OdOsH) + radical(OJC=O). Adsorption correction:
+! + Thermo group additivity estimation: adsorptionPt111(O-*R) + H298(adsorptionPt111((CR2CR)*)) Binding energy corrected by LSR (0.50O) from Pt111
+CHO2X2                  C   1H   1O   2X   2G   298.000  1500.000  594.12      1
+-5.80341840E-01 2.55036236E-02-2.33738741E-05 1.04275228E-08-1.85790992E-12    2
+-5.17498962E+04 9.30366096E+00 1.60860706E+00 8.93712540E-03 2.30702155E-05    3
+-4.68695804E-08 2.44326235E-11-5.19777145E+04 1.54649757E-01                   4
+
+! Gas phase thermo for [O]C[O] from Thermo group additivity estimation: group(O2s-CsH) + group(O2s-CsH) + group(Cs-OsOsHH) + radical(OCOJ) +
+! radical(OCOJ). Adsorption correction: + Thermo group additivity estimation: adsorptionPt111(O-*R) + H298(adsorptionPt111(O-*R)) Binding energy
+! corrected by LSR (1.00O) from Pt111
+CH2O2X2                 C   1H   2O   2X   2G   298.000  1500.000  829.99      1
+ 5.63420161E-01 1.65328228E-02-2.56153949E-06-4.24400473E-09 1.57654595E-12    2
+-3.82009115E+04 6.90961048E+00 3.87186191E+00 5.18663590E-04 2.65059723E-05    3
+-2.76928209E-08 8.66999077E-12-3.87477066E+04-8.42075190E+00                   4
+
+! Thermo library: surfaceThermoPt111 Binding energy corrected by LSR (0.25C) from Pt111
+CHO2X                   C   1H   1O   2X   1G   298.000  1500.000  683.23      1
+ 1.74731999E+00 1.76134310E-02-1.64022717E-05 7.66371915E-09-1.41645965E-12    2
+-4.00600469E+04-2.46736135E+00 7.60106753E-02 2.73977853E-02-3.78824943E-05    3
+ 2.86223479E-08-9.08509733E-12-3.98316598E+04 4.95916682E+00                   4
+
+! Thermo library: surfaceThermoPt111 Binding energy corrected by LSR () from Pt111
+CH2OX                   C   1H   2O   1X   1G   298.000  1500.000  709.88      1
+ 2.11223544E+00 1.04965464E-02-4.98185477E-06 7.32342893E-10 8.23868756E-14    2
+-1.47658837E+04 1.64685356E+00 4.60310888E+00-1.55043938E-03 1.62721679E-05    3
+-1.52820284E-08 4.33261049E-12-1.51696313E+04-9.86954722E+00                   4
+
+! Thermo library: surfaceThermoPt111 Binding energy corrected by LSR (0.50O) from Pt111
+CH3OX                   C   1H   3O   1X   1G   298.000  1500.000  675.20      1
+ 1.41801757E+00 1.86635876E-02-1.25420952E-05 4.38033354E-09-6.20620277E-13    2
+-2.60058494E+04-4.91862222E+00 2.61630983E+00 1.25108838E-02-9.75475052E-07    3
+-4.96466885E-09 2.07101533E-12-2.61892349E+04-1.03887808E+01                   4
+
+! Gas phase thermo for [O]CO from Thermo group additivity estimation: group(O2s-CsH) + group(O2s-CsH) + group(Cs-OsOsHH) + radical(OCOJ). Adsorption
+! correction: + Thermo group additivity estimation: adsorptionPt111(O-*R) Binding energy corrected by LSR (0.50O) from Pt111
+CH3O2X                  C   1H   3O   2X   1G   298.000  1500.000  696.06      1
+ 5.86517984E-01 3.04866464E-02-2.85325283E-05 1.35884098E-08-2.56929568E-12    2
+-4.73746643E+04 3.94535742E+00-8.31884211E-01 3.40571775E-02-2.63560633E-05    3
+ 2.04978207E-09 4.97053141E-12-4.70662430E+04 1.10714901E+01                   4
+
+! Thermo library: surfaceThermoPt111 Binding energy corrected by LSR () from Pt111
+*                       X   1               G   298.000  1500.000  934.86      1
+-3.72082027E-03 1.02353798E-05-6.65598522E-09-1.69560381E-12 1.79200463E-15    2
+ 8.95595759E-01 1.89172948E-02 2.51383562E-03-1.60198184E-05 3.47952631E-08    3
+-3.07734322E-11 9.43913149E-15-2.88512472E-01-1.08397810E-02                   4
+
+END
+
+
+
+REACTIONS    KCAL/MOLE   MOLES
+
+! Reaction index: Chemkin #1; RMG #-1
+CO+*=COX                                            1.000e+00 0.000     0.000    
+    STICK
+
+! Reaction index: Chemkin #2; RMG #-1
+CO2+*=CO2X                                          1.000e+00 0.000     0.000    
+    STICK
+
+! Reaction index: Chemkin #3; RMG #-1
+H2+*+*=HX+HX                                        1.000e-05 0.000     11.472   
+    STICK
+
+! Reaction index: Chemkin #4; RMG #-1
+H2O+*=H2OX                                          1.000e+00 0.000     0.000    
+    STICK
+
+! Reaction index: Chemkin #5; RMG #-1
+CH2O+*=CH2OX                                        1.000e+00 0.000     0.000    
+    STICK
+
+! Reaction index: Chemkin #6; RMG #-1
+CH3OH+*=CH4OX                                       1.000e+00 0.000     0.000    
+    STICK
+
+! Reaction index: Chemkin #7; RMG #-1
+COX+OX=CO2X+*                                       1.301393e+25 0.000     12.161   
+
+! Reaction index: Chemkin #8; RMG #-1
+COX+HOX=CHO2X+*                                     3.397893e+28 0.000     8.489    
+
+! Reaction index: Chemkin #9; RMG #-1
+CO2X+HX=CHO2X+*                                     3.397893e+30 0.000     0.000    
+
+! Reaction index: Chemkin #10; RMG #-1
+CO2X+H2OX=CHO2X+HOX                                 3.397893e+26 0.000     17.897   
+
+! Reaction index: Chemkin #11; RMG #-1
+H2OX+*=HOX+HX                                       2.062521e+20 0.000     18.585   
+
+! Reaction index: Chemkin #12; RMG #-1
+HOX+*=OX+HX                                         2.983350e+26 0.000     26.845   
+
+! Reaction index: Chemkin #13; RMG #-1
+HOX+HOX=H2OX+OX                                     5.334692e+19 0.000     13.996   
+
+! Reaction index: Chemkin #14; RMG #-1
+CO2X+HX=CHO2X2                                      3.397893e+30 0.000     0.000    
+
+! Reaction index: Chemkin #15; RMG #-1
+CHO2X2+HX=CH2O2X2+*                                 1.077132e+27 0.000     25.010   
+
+! Reaction index: Chemkin #16; RMG #-1
+CH2O2X2+HX=CH3O2X+*+*                               6.591913e+25 0.000     14.685   
+
+! Reaction index: Chemkin #17; RMG #-1
+CH2O2X2=CH2OX+OX                                    4.009514e+21 0.000     0.000    
+
+! Reaction index: Chemkin #18; RMG #-1
+CH3O2X+*=CH2OX+HOX                                  2.606184e+21 0.000     14.914   
+
+! Reaction index: Chemkin #19; RMG #-1
+CH2OX+HX=CH3OX+*                                    3.397893e+30 0.000     0.000    
+
+! Reaction index: Chemkin #20; RMG #-1
+CH3OX+HX=CH4OX+*                                    6.591913e+19 0.000     25.010   
+
+! Reaction index: Chemkin #21; RMG #-1
+COX+HX=CHOX+*                                       1.753313e+16 0.000     16.520   
+
+! Reaction index: Chemkin #22; RMG #-1
+CHO2X2=CHOX+OX                                      6.693850e+18 0.000     47.725   
+
+! Reaction index: Chemkin #23; RMG #-1
+CHOX+HX=CH2OX+*                                     1.464492e+22 0.000     4.359    
+
+! Reaction index: Chemkin #24; RMG #-1
+COX+HOX=CHOX+OX                                     2.769283e+21 0.000     33.270   
+
+! Reaction index: Chemkin #25; RMG #-1
+COX+H2OX=CHOX+HOX                                   7.067618e+27 0.000     22.486   
+
+! Reaction index: Chemkin #26; RMG #-1
+CH3OX+COX=CH2OX+CHOX                                3.397893e+30 0.000     39.006   
+
+! Reaction index: Chemkin #27; RMG #-1
+CH3OX+CHOX=CH4OX+COX                                4.451240e+10 0.000     0.000    
+
+! Reaction index: Chemkin #28; RMG #-1
+CH3O2X+HX=CH2OX+H2OX                                3.397893e+30 0.000     0.000    
+
+END
+
